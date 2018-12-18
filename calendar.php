@@ -1,0 +1,154 @@
+<?php
+
+
+/**
+ * Simple PHP Calendar Class.
+ *
+ * @copyright  Copyright (c) Benjamin Hall
+ * @license https://github.com/benhall14/php-calendar
+ * @package protocols
+ * @version 1.1
+ * @author Benjamin Hall <https://linkedin.com/in/benhall14>
+*/
+class Calendar
+{
+    /**
+     * The internal date pointer.
+     * @var DateTime
+     */
+    private $date;
+
+
+    /**
+     * Find the timetable from the database
+     * @param  DateTime $date The date to match a timetable for.
+     * @return array          Either an array of events or false.
+     */
+    private function findTimetable(DateTime $date)
+    {
+        global $wpdb;
+        $found_events = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_dates ".
+            "LEFT JOIN {$wpdb->prefix}railtimetable_timetables ON ".
+            " {$wpdb->prefix}railtimetable_dates.timetable = {$wpdb->prefix}railtimetable_timetables.timetable ".
+            "WHERE {$wpdb->prefix}railtimetable_dates.date = '".$date->format('Y-m-d')."'", OBJECT );
+
+        return ($found_events[0]) ? : false;
+    }
+
+    /**
+     * Find special events in the database
+     * @param  DateTime $date The date to match an event for.
+     * @return array          Either an array of events or false.
+     */
+    private function findSpecialEvent(DateTime $date)
+    {
+        global $wpdb;
+        $tdate = $date->format('Y-m-d');
+        $found_events = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_specialdates ".
+            "WHERE '".$tdate."' >= start AND '".$tdate."' <= end", OBJECT );
+
+        return ($found_events[0]) ? : false;
+    }
+
+    /**
+     * Draw the calendar and echo out.
+     * @param string $date    The date of this calendar.
+     * @param string $format  The format of the preceding date.
+     * @return string         The calendar
+     */
+    public function draw($date = false)
+    {
+        $calendar = '';
+
+        if ($date) {
+            $date = DateTime::createFromFormat('Y-m-d', $date);
+            $date->modify('first day of this month');
+        } else {
+            $date = new DateTime();
+            $date->modify('first day of this month');
+        }
+
+        $today = new DateTime();
+        $total_days_in_month = (int) $date->format('t');
+        $color = $color ? : '';
+        $calendar .= '<table class="calendar">';
+        $calendar .= '<thead>';
+        $calendar .= '<tr class="calendar-title">';
+        $calendar .= '<th colspan="7">';
+        $calendar .= $date->format('F Y');
+        $calendar .= '</th>';
+        $calendar .= '</tr>';
+        $calendar .= '<tr class="calendar-header">';
+        $calendar .= '<th>';
+        $calendar .= implode('</th><th>', array('S','M','T','W','T','F','S'));
+        $calendar .= '</th>';
+        $calendar .= '</tr>';
+        $calendar .= '</thead>';
+        $calendar .= '<tbody>';
+        $calendar .= '<tr>';
+
+        # padding before the month start date IE. if the month starts on Wednesday
+        for ($x = 0; $x < $date->format('w'); $x++) {
+            $calendar .= '<td class="pad"> </td>';
+        }
+
+        $running_day = clone $date;
+        $running_day_count = 1;
+
+        do {
+            $timetable = $this->findTimetable($running_day);
+            $special = $this->findSpecialEvent($running_day);
+            $class = '';
+            $style = '';
+            $event_summary = '';
+
+            if ($timetable) {
+                $style .= "background:#".$timetable->background.";color:#".$timetable->colour.";";
+                //$event_summary = ;
+            }
+
+            if ($special) {
+                $class .= " calendar-special ";
+                $event_summary .= $special->title;
+            }
+
+            $today_class = ($running_day->format('Y-m-d') == $today->format('Y-m-d')) ? ' today' : '';
+            $calendar .= '<td style="'.$style.'" class="' . $class . $today_class . ' day" title="' . htmlentities($event_summary) . '">';
+            $calendar .= $running_day->format('j');
+            $calendar .= '</td>';
+
+            # check if this calendar-row is full and if so push to a new calendar row
+            if ($running_day->format('w') == 6) {
+                $calendar .= '</tr>';
+
+                # start a new calendar row if there are still days left in the month
+                if (($running_day_count + 1) <= $total_days_in_month) {
+                    $calendar .= '<tr>';
+                }
+
+                # reset padding because its a new calendar row
+                $day_padding_offset = 0;
+            }
+
+            $running_day->modify('+1 Day');
+
+            $running_day_count++;
+        } while ($running_day_count <= $total_days_in_month);
+
+        $padding_at_end_of_month = 7 - $running_day->format('w');
+
+        # padding at the end of the month
+        if ($padding_at_end_of_month && $padding_at_end_of_month < 7) {
+            for ($x = 1; $x <= $padding_at_end_of_month; $x++) {
+                $calendar .= '<td class="pad"> </td>';
+            }
+        }
+
+        $calendar .= '</tr>';
+        $calendar .= '</tbody>';
+        $calendar .= '</table>';
+
+        return $calendar;
+    }
+}
+ 
