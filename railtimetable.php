@@ -27,20 +27,30 @@ function railtimetable_show($attr) {
     return "<div class='calendar-wrapper'>".$str."</div>";
 }
 
-add_shortcode('railtimetable_show', 'railtimetable_show');
+function railtimetable_times($attr) {
+    global $wpdb;
+    $results = $wpdb->get_results("SELECT html FROM {$wpdb->prefix}railtimetable_timetables WHERE timetable='".$attr['timetable']."'");
+    if ($results) {
+        return $results[0]->html;
+    }
+}
 
-function dabnersplashback_script()
+function railtimetable_script()
 {
     //wp_enqueue_script('jquery');
     wp_register_script('railtimetable_script', plugins_url('railtimetable/script.js'));
     wp_enqueue_script('railtimetable_script');
 }
 
-function dabnersplashback_style()
+function railtimetable_style()
 {
     wp_register_style('railtimetable_style', plugins_url('railtimetable/style.css'));
     wp_enqueue_style('railtimetable_style');
 }
 
-add_action( 'wp_enqueue_scripts', 'dabnersplashback_script' );
-add_action( 'wp_enqueue_scripts', 'dabnersplashback_style' );
+add_shortcode('railtimetable_show', 'railtimetable_show');
+add_shortcode('railtimetable_times', 'railtimetable_times');
+
+add_action( 'wp_enqueue_scripts', 'railtimetable_script' );
+add_action( 'wp_enqueue_scripts', 'railtimetable_style' );
+

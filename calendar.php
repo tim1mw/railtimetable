@@ -40,14 +40,14 @@ class Calendar
      * @param  DateTime $date The date to match an event for.
      * @return array          Either an array of events or false.
      */
-    private function findSpecialEvent(DateTime $date)
+    private function findSpecialEvents(DateTime $date)
     {
         global $wpdb;
         $tdate = $date->format('Y-m-d');
         $found_events = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_specialdates ".
             "WHERE '".$tdate."' >= start AND '".$tdate."' <= end", OBJECT );
 
-        return ($found_events[0]) ? : false;
+        return ($found_events) ? : false;
     }
 
     /**
@@ -97,7 +97,7 @@ class Calendar
 
         do {
             $timetable = $this->findTimetable($running_day);
-            $special = $this->findSpecialEvent($running_day);
+            $specials = $this->findSpecialEvents($running_day);
             $class = '';
             $style = '';
             $event_summary = '';
@@ -107,9 +107,14 @@ class Calendar
                 //$event_summary = ;
             }
 
-            if ($special) {
+            if ($specials) {
                 $class .= " calendar-special ";
-                $event_summary .= $special->title;
+                for ($loop=0; $loop< count($specials); $loop++) {
+                    $event_summary .= $specials[$loop]->title;
+                    if ($loop < count($specials)-1) {
+                        $event_summary .= " & ";
+                    }
+                }
             }
 
             $today_class = ($running_day->format('Y-m-d') == $today->format('Y-m-d')) ? ' today' : '';
