@@ -35,6 +35,22 @@ function railtimetable_times($attr) {
     }
 }
 
+function railtimetable_today($attr) {
+
+    return '<p><a href="/events"><img class="aligncenter size-small wp-image-697" '.
+    ' src="/wp-content/uploads/2018/11/Maid_Marian.jpg" alt="" width="1024" height="732" /></a></p>'.
+    "<p>This will show today's trains when we have a calendar from which to get them.</p>".
+    '<p>In the mean time please look at our empty <a href="/timetable">timetable page</a>....</p>';
+
+}
+
+function railtimetable_events($attr) {
+    return '<p><a href="/events"><img class="aligncenter size-small wp-image-697" '.
+        ' src="/wp-content/uploads/2018/03/003_small.jpg" alt="" width="300" height="200" /></a></p>'.
+        '<p>This will show the next special event (<strong>Gravity Train???</strong>) when we have a calendar from which to get it....</p>'.
+        '<p>In the mean time please look at our empty <a href="/events">special events page</a>.</p>';
+}
+
 function railtimetable_script()
 {
     //wp_enqueue_script('jquery');
@@ -50,6 +66,8 @@ function railtimetable_style()
 
 add_shortcode('railtimetable_show', 'railtimetable_show');
 add_shortcode('railtimetable_times', 'railtimetable_times');
+add_shortcode('railtimetable_today', 'railtimetable_today');
+add_shortcode('railtimetable_events', 'railtimetable_events');
 
 add_action( 'wp_enqueue_scripts', 'railtimetable_script' );
 add_action( 'wp_enqueue_scripts', 'railtimetable_style' );
