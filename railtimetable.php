@@ -29,10 +29,72 @@ function railtimetable_show($attr) {
 
 function railtimetable_times($attr) {
     global $wpdb;
-    $results = $wpdb->get_results("SELECT html FROM {$wpdb->prefix}railtimetable_timetables WHERE timetable='".$attr['timetable']."'");
-    if ($results) {
-        return $results[0]->html;
+    $tmeta = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE timetable='".$attr['timetable']."'");
+
+    if (!$tmeta) {
+        return "Error: Unknown timetable";
     }
+
+    $tmeta = $tmeta[0];
+
+    if (strlen($tmeta->html) > 0) {
+        return $tmeta->html;
+    }
+
+    $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations");
+    $text = "<table>";
+
+    $text .= "<tr><td class='timetable-header' style='background:#".$tmeta->background.";color:#".$tmeta->colour.";' colspan='2'>".$tmeta->timetable."&nbsp;Timetable</td>";
+
+    $headers = explode(",", $tmeta->colsmeta);
+    foreach ($headers as $header) {
+        $text .= "<td style='background:#".$tmeta->background.";color:#".$tmeta->colour.";'>".$header."</td>";
+    }
+
+    $text.= "</tr>";
+
+    $text .= railtimetable_times_thalf($stations, "down", $attr['timetable']);
+    $text .= "<tr><td colspan='".($tmeta->totaltrains+2)."'></td></tr>";
+    $stations = array_reverse($stations);
+    $text .= railtimetable_times_thalf($stations, "up", $attr['timetable']);
+    $text .= "</table>";
+    return $text;
+}
+
+function railtimetable_times_thalf($stations, $dir, $timetable) {
+    global $wpdb;
+    $text = "";
+    foreach ($stations as $station) {
+        $times = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_times WHERE timetable='".$timetable."' AND station=".$station->id);
+
+        $text .= "<tr><td>".$station->name."</td>";
+
+        $keydeps = $dir."_deps";
+        $keyarrs = $dir."_arrs";
+
+        if (strlen($times[0]->$keydeps) > 0) {
+            $text .= "<td>dep</td>";
+            $text .= railtimetable_times_gettimes($times[0]->$keydeps);
+        }
+
+        if (strlen($times[0]->$keyarrs) > 0) {
+            $text .= "<td>arr</td>";
+            $text .= railtimetable_times_gettimes($times[0]->$keyarrs);
+        }
+
+        $text .= "</tr>";
+    }
+    return $text;
+}
+
+function railtimetable_times_gettimes($times) {
+    $times_arr = explode(',', $times);
+
+    foreach ($times_arr as $time) {
+        $text .= "<td>".$time."</td>";
+    }
+
+    return $text;
 }
 
 function railtimetable_today($attr) {
