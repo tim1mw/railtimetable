@@ -40,7 +40,7 @@ function railtimetable_times($attr) {
     $tmeta = $tmeta[0];
 
     $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations");
-    $text = "<table>";
+    $text = "<div class='timetable-wrapper'><table style='margin-left:auto;margin-right:auto;'>";
 
     $text .= "<tr><td class='timetable-header' style='background:#".$tmeta->background.";color:#".$tmeta->colour.";' colspan='2'>".__("Timetable", "railtimetable").":&nbsp;".railtimetable_trans($tmeta->timetable)."</td>";
 
@@ -61,6 +61,7 @@ function railtimetable_times($attr) {
         $text .= railtimetable_trans($tmeta->html);
     }
 
+    $text .= "</div>";
     return $text;
 }
 
@@ -210,8 +211,19 @@ function railtimetable_script()
 
 function railtimetable_style()
 {
+    global $wpdb;
     wp_register_style('railtimetable_style', plugins_url('railtimetable/style.css'));
     wp_enqueue_style('railtimetable_style');
+
+    $timetables = $wpdb->get_results("SELECT id, timetable, colour, background FROM {$wpdb->prefix}railtimetable_timetables");
+    $data = '';
+    foreach ($timetables as $timetable) {
+        $data .= ".railtimetable-".$timetable->timetable."{\n".
+            "color:#".$timetable->colour.";\n".
+            "background:#".$timetable->background.";\n".
+            "}";
+    }
+    wp_add_inline_style('railtimetable_style', $data);
 }
 
 function railtimetable_load_textdomain() {
@@ -252,4 +264,5 @@ add_shortcode('railtimetable_events', 'railtimetable_events');
 add_action( 'init', 'railtimetable_load_textdomain' );
 add_action( 'wp_enqueue_scripts', 'railtimetable_script' );
 add_action( 'wp_enqueue_scripts', 'railtimetable_style' );
+//add_action( 'wp_enqueue_scripts', 'railtimetable_inlinestyle' );
 
