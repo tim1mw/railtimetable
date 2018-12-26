@@ -116,6 +116,7 @@ function railtimetable_trans($str) {
 
 function railtimetable_today($attr) {
     global $wpdb;
+    railtimetable_setlangage();
     $html = '';
 
     $stations = explode(',', $attr['stations']);
@@ -186,13 +187,6 @@ function railtimetable_today($attr) {
     $html .= "</table>";
 
     return $html;
-/*
-    return '<p><a href="/events"><img class="aligncenter size-small wp-image-697" '.
-    ' src="/wp-content/uploads/2018/11/Maid_Marian.jpg" alt="" width="1024" height="732" /></a></p>'.
-    "<p>This will show today's trains when we have a calendar from which to get them.</p>".
-    '<p>In the mean time please look at our empty <a href="/timetable">timetable page</a>....</p>';
-*/
-
 }
 
 function railtimetable_events($attr) {
@@ -227,7 +221,6 @@ function railtimetable_style()
 }
 
 function railtimetable_load_textdomain() {
-    //load_plugin_textdomain( 'railtimetable', false, basename( dirname( __FILE__ ) ) . '/languages' ); 
     load_plugin_textdomain( 'railtimetable' ); 
 
     if (function_exists('pll_register_string')) {
@@ -264,5 +257,3 @@ add_shortcode('railtimetable_events', 'railtimetable_events');
 add_action( 'init', 'railtimetable_load_textdomain' );
 add_action( 'wp_enqueue_scripts', 'railtimetable_script' );
 add_action( 'wp_enqueue_scripts', 'railtimetable_style' );
-//add_action( 'wp_enqueue_scripts', 'railtimetable_inlinestyle' );
-
