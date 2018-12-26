@@ -1,0 +1,11 @@
+# Arrival abbreviation
+msgid "arr"
+msgstr "cyr"
+
+# departure abbreviation
+msgid "dep"
+msgstr "gad"
+
+# Timetable
+msgid "Timetable"
+msgstr "Amserlen"
