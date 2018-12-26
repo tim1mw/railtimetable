@@ -66,3 +66,11 @@
     font-weight:bold;
     text-transform: uppercase;
 }
+
+.next-trains {
+    width:100%;
+    text-transform:capitalize;
+    border:1px solid #555555;
+    padding:4px;
+    font-weight:bold;
+}

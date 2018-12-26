@@ -9,3 +9,15 @@ msgstr "gad"
 # Timetable
 msgid "Timetable"
 msgstr "Amserlen"
+
+#
+msgid "Today's Trains"
+msgstr "Trenau Heddiw"
+
+#
+msgid "Tomorrows's Trains"
+msgstr "Trenau Yfory"
+
+#
+msgid "Next trains on"
+msgstr "Trenau nesaf ar"

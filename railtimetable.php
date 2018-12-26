@@ -17,6 +17,7 @@ defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 require_once('calendar.php');
 
 function railtimetable_show($attr) {
+    railtimetable_setlangage();
     $calendar = new Calendar();
 
     $str="";
@@ -29,26 +30,23 @@ function railtimetable_show($attr) {
 
 function railtimetable_times($attr) {
     global $wpdb;
+
     $tmeta = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE timetable='".$attr['timetable']."'");
 
     if (!$tmeta) {
-        return "Error: Unknown timetable";
+        return __("Error: Unknown timetable", "railtimetable");
     }
 
     $tmeta = $tmeta[0];
 
-    if (strlen($tmeta->html) > 0) {
-        return $tmeta->html;
-    }
-
     $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations");
     $text = "<table>";
 
-    $text .= "<tr><td class='timetable-header' style='background:#".$tmeta->background.";color:#".$tmeta->colour.";' colspan='2'>".$tmeta->timetable."&nbsp;Timetable</td>";
+    $text .= "<tr><td class='timetable-header' style='background:#".$tmeta->background.";color:#".$tmeta->colour.";' colspan='2'>".__("Timetable", "railtimetable").":&nbsp;".railtimetable_trans($tmeta->timetable)."</td>";
 
     $headers = explode(",", $tmeta->colsmeta);
     foreach ($headers as $header) {
-        $text .= "<td style='background:#".$tmeta->background.";color:#".$tmeta->colour.";'>".$header."</td>";
+        $text .= "<td style='background:#".$tmeta->background.";color:#".$tmeta->colour.";'>".railtimetable_trans($header)."</td>";
     }
 
     $text.= "</tr>";
@@ -58,6 +56,11 @@ function railtimetable_times($attr) {
     $stations = array_reverse($stations);
     $text .= railtimetable_times_thalf($stations, "up", $attr['timetable']);
     $text .= "</table>";
+
+    if (strlen($tmeta->html) > 0) {
+        $text .= railtimetable_trans($tmeta->html);
+    }
+
     return $text;
 }
 
@@ -73,12 +76,12 @@ function railtimetable_times_thalf($stations, $dir, $timetable) {
         $keyarrs = $dir."_arrs";
 
         if (strlen($times[0]->$keydeps) > 0) {
-            $text .= "<td>dep</td>";
+            $text .= "<td>".__("dep", "railtimetable")."</td>";
             $text .= railtimetable_times_gettimes($times[0]->$keydeps);
         }
 
         if (strlen($times[0]->$keyarrs) > 0) {
-            $text .= "<td>arr</td>";
+            $text .= "<td>".__("arr", "railtimetable")."</td>";
             $text .= railtimetable_times_gettimes($times[0]->$keyarrs);
         }
 
@@ -91,18 +94,103 @@ function railtimetable_times_gettimes($times) {
     $times_arr = explode(',', $times);
 
     foreach ($times_arr as $time) {
-        $text .= "<td>".$time."</td>";
+        $text .= "<td>".__($time, "railtimetable")."</td>";
     }
 
     return $text;
 }
 
-function railtimetable_today($attr) {
+function railtimetable_setlangage() {
+    if (function_exists("pll_current_language")) {
+        setlocale(LC_TIME, pll_current_language('locale'));
+    }
+}
 
+function railtimetable_trans($str) {
+    if (function_exists("pll__")) {
+        return pll__($str, "railtimetable");
+    }
+    return $str;
+}
+
+function railtimetable_today($attr) {
+    global $wpdb;
+    $html = '';
+
+    $stations = explode(',', $attr['stations']);
+    $times = array();
+    $now = date("Y-m-d");
+    $datetime = new DateTime('tomorrow');
+    $tomorrow = $datetime->format('Y-m-d');
+
+    // If it's after 15:00 then visitors probably want tomorrows train times.
+    if (date('H') > 15) {
+        $now = $tomorrow;
+    }
+
+    foreach ($stations as $index=>$station) {
+        $results = $wpdb->get_results("SELECT ".
+            "wp_railtimetable_dates.date, ".
+            "wp_railtimetable_dates.timetable, ".
+            "wp_railtimetable_timetables.background, ".
+            "wp_railtimetable_timetables.colour, ".
+            "wp_railtimetable_times.up_deps, ".
+            "wp_railtimetable_times.down_deps, ".
+            "wp_railtimetable_stations.name ".
+            "FROM `wp_railtimetable_dates` ".
+            "LEFT JOIN wp_railtimetable_timetables ON wp_railtimetable_dates.timetable =  wp_railtimetable_timetables.timetable ".
+            "LEFT JOIN wp_railtimetable_times ON wp_railtimetable_timetables.timetable = wp_railtimetable_times.timetable ".
+            "LEFT JOIN wp_railtimetable_stations ON wp_railtimetable_times.station = wp_railtimetable_stations.id ".
+            "WHERE wp_railtimetable_dates.date >= '".$now."' ".
+            "AND wp_railtimetable_stations.name = '".$station."' ".
+            "ORDER BY wp_railtimetable_dates.date ASC ".
+            "LIMIT 1");
+
+        if (!$results) {
+            return $html.__("No trains today");
+        }
+
+        $times[$index] = $results[0];
+    }
+
+    $nextd = new DateTime($times[0]->date);
+    $nextds = strftime("%e/%b/%Y", $nextd->getTimestamp());
+
+    $html.="<h4 style='text-align:center'>";
+
+    if ($times[0]->date == $now) {
+        $html .= __("Today's Trains");
+    }
+    elseif ($times[0]->date == $tomorrow) {
+        $html .= __("Tomorrows's Trains");
+    }
+    else {
+        $html .= __("Next trains on")." ".$nextds;
+    }
+
+    $style = "style='padding:2px;background:#".$times[0]->background.";color:#".$times[0]->colour.";'";
+    $html.="</h4><table class='next-trains' ".$style."><tr><td ".$style.">".
+        __("Timetable")."</td><td ".$style.">".railtimetable_trans($times[0]->timetable)."</td></tr>";
+
+    foreach ($times as $time) {
+        $html .= "<tr><td ".$style.">".$time->name."</td><td ".$style.">";
+        if (strlen($time->up_deps) > 0) {
+            $html.= str_replace(",", ", ", $time->up_deps);
+        } else {
+            $html.= str_replace(",", ", ", $time->down_deps);
+        }
+        $html .= "</td></tr>";
+    }
+
+    $html .= "</table>";
+
+    return $html;
+/*
     return '<p><a href="/events"><img class="aligncenter size-small wp-image-697" '.
     ' src="/wp-content/uploads/2018/11/Maid_Marian.jpg" alt="" width="1024" height="732" /></a></p>'.
     "<p>This will show today's trains when we have a calendar from which to get them.</p>".
     '<p>In the mean time please look at our empty <a href="/timetable">timetable page</a>....</p>';
+*/
 
 }
 
@@ -126,11 +214,42 @@ function railtimetable_style()
     wp_enqueue_style('railtimetable_style');
 }
 
+function railtimetable_load_textdomain() {
+    //load_plugin_textdomain( 'railtimetable', false, basename( dirname( __FILE__ ) ) . '/languages' ); 
+    load_plugin_textdomain( 'railtimetable' ); 
+
+    if (function_exists('pll_register_string')) {
+        global $wpdb;
+        $events = $wpdb->get_results("SELECT id,title,description FROM {$wpdb->prefix}railtimetable_specialdates");
+        foreach ($events as $event) {
+            pll_register_string("railtimetable_title_".$event->id, $event->title, "railtimetable");
+            pll_register_string("railtimetable_desc_".$event->id, $event->description, "railtimetable");
+        }
+
+        $tts = $wpdb->get_results("SELECT id,timetable,html,colsmeta FROM {$wpdb->prefix}railtimetable_timetables");
+        foreach ($tts as $tt) {
+            pll_register_string("railtimetable_timetable_".$tt->id, $tt->timetable, "railtimetable");
+            $headers = explode(",", $tt->colsmeta);
+            foreach ($headers as $index=>$header) {
+                if (strlen($header) > 0) {
+                    pll_register_string("railtimetable_header_".$tt->id."_".$index, $header, "railtimetable");
+                }
+            }
+            if (strlen($tt->html) > 0) {
+                pll_register_string("railtimetable_html_".$tt->id, $tt->html, "railtimetable");
+            }
+        }
+    }
+
+}
+
+
 add_shortcode('railtimetable_show', 'railtimetable_show');
 add_shortcode('railtimetable_times', 'railtimetable_times');
 add_shortcode('railtimetable_today', 'railtimetable_today');
 add_shortcode('railtimetable_events', 'railtimetable_events');
 
+add_action( 'init', 'railtimetable_load_textdomain' );
 add_action( 'wp_enqueue_scripts', 'railtimetable_script' );
 add_action( 'wp_enqueue_scripts', 'railtimetable_style' );
 

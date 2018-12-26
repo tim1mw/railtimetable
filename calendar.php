@@ -75,12 +75,12 @@ class Calendar
         $calendar .= '<thead>';
         $calendar .= '<tr class="calendar-title">';
         $calendar .= '<th colspan="7">';
-        $calendar .= $date->format('F Y');
+        $calendar .= strftime('%B %Y', $date->getTimestamp());
         $calendar .= '</th>';
         $calendar .= '</tr>';
         $calendar .= '<tr class="calendar-header">';
         $calendar .= '<th>';
-        $calendar .= implode('</th><th>', array('S','M','T','W','T','F','S'));
+        $calendar .= implode('</th><th>', $this->daysofweek());
         $calendar .= '</th>';
         $calendar .= '</tr>';
         $calendar .= '</thead>';
@@ -110,7 +110,7 @@ class Calendar
             if ($specials) {
                 $class .= " calendar-special ";
                 for ($loop=0; $loop< count($specials); $loop++) {
-                    $event_summary .= $specials[$loop]->title;
+                    $event_summary .= railtimetable_trans($specials[$loop]->title);
                     if ($loop < count($specials)-1) {
                         $event_summary .= " & ";
                     }
@@ -154,6 +154,16 @@ class Calendar
         $calendar .= '</table>';
 
         return $calendar;
+    }
+
+    private function daysofweek($chars = 1) {
+        $timestamp = strtotime('next Sunday');
+        $days = array();
+        for ($i = 0; $i < 7; $i++) {
+            $days[] = substr(strftime('%A', $timestamp), 0, 1);
+            $timestamp = strtotime('+1 day', $timestamp);
+        }
+        return $days;
     }
 }
  
