@@ -25,3 +25,7 @@ msgstr "Trenau nesaf ar"
 #
 msgid "Timetable for"
 msgstr "Amserlen ar gyfer"
+
+#
+msgid "Special Event"
+msgstr "Digwyddiadau Arbennig"

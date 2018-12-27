@@ -165,10 +165,10 @@ function railtimetable_today($attr) {
     return $html;
 }
 
-function railtimetable_smalltimetable($times, $heading, $lang = null) {
+function railtimetable_smalltimetable($times, $heading, $extra = "") {
 
     $html = "<h4 style='text-align:center;margin-bottom:10px;'>".$heading."</h4>";
-
+    $html .= $extra;
     $style = "style='vertical-align:top;padding:2px;background:#".$times[0]->background.";color:#".$times[0]->colour.";'";
     $html.="<table class='next-trains' ".$style."><tr><td ".$style.">".
         __("Timetable", "railtimetable")."</td><td ".$style.">".railtimetable_trans($times[0]->timetable, $lang)."</td></tr>";
@@ -290,21 +290,43 @@ function railtimetable_load_textdomain() {
 
 function railtimetable_popup() {
     if(strpos($_SERVER["REQUEST_URI"], 'railtimetable_popup') > 0) {
-
+        global $wpdb;
         // Prevent SQL injection by parsing the date
         $date = DateTime::createFromFormat('Y-m-d', $_GET['date']);
+
+        $found_events = $wpdb->get_results("SELECT id,title,link FROM {$wpdb->prefix}railtimetable_specialdates ".
+            "WHERE '".$date->format('Y-m-d')."' >= start AND '".$date->format('Y-m-d')."' <= end");
+
+        $extra = "";
+        if ($found_events) {
+            $extra .= "<div style='margin-top:1em;margin-bottom:1em;'><h5>".__("Special Event").": ";
+            for ($loop=0; $loop<count($found_events); $loop++) {
+                $extra .= "<a href='".$found_events[$loop]->link."'>".pll__($found_events[$loop]->title)."</a>";
+                if ($loop < count($found_events)-1) {
+                    $extra .= " & ";
+                }
+            }
+            $extra .= "</h5></div>";
+        }
+
         $first = railtimetable_timesforstation(0, "id", $date->format('Y-m-d'), "=");
         $last = railtimetable_timesforstation(2, "id", $date->format('Y-m-d'), "=");
-        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime("%e/%b/%Y", $date->getTimestamp()));
+        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime("%e/%b/%Y", $date->getTimestamp()), $extra);
 
         if (strlen($first[0]->html) > 0) {
             echo railtimetable_trans($first[0]->html);
         }
+
         exit();
    };
 
 }
 
+function railtimetable_nextspecial() {
+    global $wpdb;
+
+    
+}
 
 add_shortcode('railtimetable_show', 'railtimetable_show');
 add_shortcode('railtimetable_times', 'railtimetable_times');
