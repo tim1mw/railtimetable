@@ -39,6 +39,29 @@ function railtimetable_show($attr) {
     return "<div class='calendar-wrapper' id='railtimetable-cal'>".$str."</div>";
 }
 
+function railtimetable_times_all($attr) {
+    global $wpdb;
+    $html = '<div class="timetabletabs" id="timetabletabs"><ul style="margin:0px;">';
+
+    $tmetas = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_timetables");
+    $width = 100/count($tmetas);
+    for($loop=0; $loop < count($tmetas); $loop++) {
+        $html .= '<li class="railtimetable-'.$tmetas[$loop]->timetable.'"><a style="width:'.$width.'%" class="railtimetable-'.$tmetas[$loop]->timetable.'" href="#timetabletab'.$loop.'">'.railtimetable_trans($tmetas[$loop]->timetable).
+            '</a></li>';
+    }
+
+    $html .= "</ul>";
+
+    for($loop=0; $loop < count($tmetas); $loop++) {
+        $html .= '<div id="timetabletab'.$loop.'" class="timetabletabs-div" style="border-color:#'.$tmetas[$loop]->background.';" >'.
+            railtimetable_render_times($tmetas[$loop]).'</div>';
+    }
+
+    $html .= "<script type='text/javascript'>initAllTimetable();</script>";
+
+    return $html;
+}
+
 function railtimetable_times($attr) {
     global $wpdb;
 
@@ -48,8 +71,11 @@ function railtimetable_times($attr) {
         return __("Error: Unknown timetable", "railtimetable");
     }
 
-    $tmeta = $tmeta[0];
+    return railtimetable_render_times($tmeta[0]);
+}
 
+function railtimetable_render_times($tmeta) {
+    global $wpdb;
     $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations");
     $text = "<div class='timetable-wrapper'><table style='margin-left:auto;margin-right:auto;'>";
 
@@ -62,10 +88,10 @@ function railtimetable_times($attr) {
 
     $text.= "</tr>";
 
-    $text .= railtimetable_times_thalf($stations, "down", $attr['timetable']);
+    $text .= railtimetable_times_thalf($stations, "down", $tmeta->timetable);
     $text .= "<tr><td colspan='".($tmeta->totaltrains+2)."'></td></tr>";
     $stations = array_reverse($stations);
-    $text .= railtimetable_times_thalf($stations, "up", $attr['timetable']);
+    $text .= railtimetable_times_thalf($stations, "up", $tmeta->timetable);
     $text .= "</table>";
 
     if (strlen($tmeta->html) > 0) {
@@ -291,6 +317,7 @@ function railtimetable_script()
 
     wp_enqueue_style('wp-jquery-ui');
     wp_enqueue_style( 'wp-jquery-ui-dialog' );
+    wp_enqueue_style( 'wp-jquery-ui-tabs' );
 
     wp_register_script('railtimetable_script', plugins_url('railtimetable/script.js'));
     wp_enqueue_script('railtimetable_script');
@@ -378,6 +405,7 @@ function railtimetable_popup() {
 
 add_shortcode('railtimetable_show', 'railtimetable_show');
 add_shortcode('railtimetable_times', 'railtimetable_times');
+add_shortcode('railtimetable_times_all', 'railtimetable_times_all');
 add_shortcode('railtimetable_today', 'railtimetable_today');
 add_shortcode('railtimetable_events', 'railtimetable_events');
 add_shortcode('railtimetable_events_full', 'railtimetable_events_full');
