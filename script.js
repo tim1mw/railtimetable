@@ -1,20 +1,23 @@
 
 
-jQuery( document ).ready( function() {
-    jQuery( '#railtimetable-modal' ).dialog( {
-        autoOpen: false,
-        modal: true,
-        draggable: false,
-        resizable: false,
+if (typeof closetext != "undefined") {
 
-        buttons: {
-            [closetext]: function() {
-                jQuery( this ).dialog( "close" );
+    jQuery( document ).ready( function() {
+        jQuery( '#railtimetable-modal' ).dialog( {
+            autoOpen: false,
+            modal: true,
+            draggable: false,
+            resizable: false,
+
+            buttons: {
+                [closetext]: function() {
+                    jQuery( this ).dialog( "close" );
+                }
             }
-        }
+        });
     });
-});
 
+}
 
 function showTrainTimes(date) {
     jQuery.ajax({
