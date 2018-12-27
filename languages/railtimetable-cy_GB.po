@@ -21,3 +21,7 @@ msgstr "Trenau Yfory"
 #
 msgid "Next trains on"
 msgstr "Trenau nesaf ar"
+
+#
+msgid "Timetable for"
+msgstr "Amserlen ar gyfer"

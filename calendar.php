@@ -119,8 +119,14 @@ class Calendar
 
             $today_class = ($running_day->format('Y-m-d') == $today->format('Y-m-d')) ? ' today' : '';
             $calendar .= '<td style="'.$style.'" class="' . $class . $today_class . ' day" title="' . htmlentities($event_summary) . '">';
-            $calendar .= $running_day->format('j');
-            $calendar .= '</td>';
+
+            if ($timetable) {
+                $calendar .= "<a style='".$style."'  href=\"javascript:showTrainTimes('".$running_day->format("Y-m-d")."');\">";
+                $calendar .= $running_day->format('j');
+                $calendar .= '</a></td>';
+            } else {
+                $calendar .= $running_day->format('j');
+            }
 
             # check if this calendar-row is full and if so push to a new calendar row
             if ($running_day->format('w') == 6) {

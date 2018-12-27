@@ -51,7 +51,7 @@
     background:#eeeeee;
 }
 
-.calendar tbody tr td.today{
+.calendar tbody tr td.today {
     border:1px solid red;
 }
 
@@ -77,4 +77,9 @@
 
 .timetable-wrapper {
     overflow: auto;
+}
+
+#railtimetable-modal {
+    background:#ffffff;
+    display:none;
 }
