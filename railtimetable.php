@@ -224,7 +224,7 @@ function railtimetable_events($attr) {
     }
 
     $found_events = $wpdb->get_results("SELECT id,title,link,start,end FROM {$wpdb->prefix}railtimetable_specialdates ".
-       "WHERE end >= '".$now."' ORDER BY start ASC LIMIT 2");
+       "WHERE end >= '".$now."' ORDER BY start ASC LIMIT ".$attr['number']);
 
     $extra = "";
     if ($found_events) {
