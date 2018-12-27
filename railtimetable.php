@@ -16,6 +16,14 @@ defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
 require_once('calendar.php');
 
+function railtimetable_currentlang() {
+    if (function_exists("pll_current_language")) {
+        return "/".pll_current_language();
+    }
+
+    return "";
+}
+
 function railtimetable_show($attr) {
     railtimetable_setlangage();
     $calendar = new Calendar();
@@ -25,12 +33,7 @@ function railtimetable_show($attr) {
         $str .= "<div class='calendar-box-wrapper'>".$calendar->draw(date($attr['year']."-".$loop."-01"))."</div>";
     }
 
-    $lang = "";
-    if (function_exists("pll_current_language")) {
-        $lang = "/".pll_current_language()."/";
-    }
-
-    $str .= '<script type="text/javascript">var baseurl = "'.$lang.get_site_url().'";var closetext="'.__("Close").'";initTrainTimes();</script>';
+    $str .= '<script type="text/javascript">var baseurl = "'.railtimetable_currentlang()."/".get_site_url().'";var closetext="'.__("Close").'";initTrainTimes();</script>';
     $str .= '<div id="railtimetable-modal"></div>';
 
     return "<div class='calendar-wrapper'>".$str."</div>";
@@ -221,7 +224,7 @@ function railtimetable_events($attr) {
     }
 
     $found_events = $wpdb->get_results("SELECT id,title,link,start,end FROM {$wpdb->prefix}railtimetable_specialdates ".
-       "WHERE end >= '".$now."' LIMIT 2");
+       "WHERE end >= '".$now."' ORDER BY start ASC LIMIT 2");
 
     $extra = "";
     if ($found_events) {
@@ -234,7 +237,30 @@ function railtimetable_events($attr) {
                 $date .= " - ".strftime("%e/%b/%Y", $end->getTimestamp());
             }
 
-            $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".$found_events[$loop]->link."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
+            $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".railtimetable_currentlang().$found_events[$loop]->link."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
+        }
+        $extra .= "</ul>";
+    }
+
+    return $extra;
+}
+
+function railtimetable_events_full() {
+     global $wpdb;
+     $found_events = $wpdb->get_results("SELECT id,title,link,start,end FROM {$wpdb->prefix}railtimetable_specialdates ORDER BY start ASC");
+
+    $extra = "";
+    if ($found_events) {
+        $extra .= "<ul>";
+        for ($loop=0; $loop<count($found_events); $loop++) {
+            $start = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->start);
+            $date = strftime("%e/%b/%Y", $start->getTimestamp());
+            if ($found_events[$loop]->start != $found_events[$loop]->end) {
+                $end = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->end);
+                $date .= " - ".strftime("%e/%b/%Y", $end->getTimestamp());
+            }
+
+            $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".railtimetable_currentlang().$found_events[$loop]->link."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
         }
         $extra .= "</ul>";
     }
@@ -290,10 +316,10 @@ function railtimetable_load_textdomain() {
 
     if (function_exists('pll_register_string')) {
         global $wpdb;
-        $events = $wpdb->get_results("SELECT id,title,description FROM {$wpdb->prefix}railtimetable_specialdates");
+        $events = $wpdb->get_results("SELECT id,title FROM {$wpdb->prefix}railtimetable_specialdates");
         foreach ($events as $event) {
             pll_register_string("railtimetable_title_".$event->id, $event->title, "railtimetable");
-            pll_register_string("railtimetable_desc_".$event->id, $event->description, "railtimetable");
+            //pll_register_string("railtimetable_desc_".$event->id, $event->description, "railtimetable");
         }
 
         $tts = $wpdb->get_results("SELECT id,timetable,html,colsmeta FROM {$wpdb->prefix}railtimetable_timetables");
@@ -326,7 +352,7 @@ function railtimetable_popup() {
         if ($found_events) {
             $extra .= "<div style='margin-top:1em;margin-bottom:1em;'><h5>".__("Special Event").": ";
             for ($loop=0; $loop<count($found_events); $loop++) {
-                $extra .= "<a href='".$found_events[$loop]->link."'>".pll__($found_events[$loop]->title)."</a>";
+                $extra .= "<a href='".railtimetable_currentlang().$found_events[$loop]->link."'>".pll__($found_events[$loop]->title)."</a>";
                 if ($loop < count($found_events)-1) {
                     $extra .= " & ";
                 }
@@ -352,6 +378,7 @@ add_shortcode('railtimetable_show', 'railtimetable_show');
 add_shortcode('railtimetable_times', 'railtimetable_times');
 add_shortcode('railtimetable_today', 'railtimetable_today');
 add_shortcode('railtimetable_events', 'railtimetable_events');
+add_shortcode('railtimetable_events_full', 'railtimetable_events_full');
 
 add_action( 'init', 'railtimetable_load_textdomain' );
 add_action( 'wp_enqueue_scripts', 'railtimetable_script' );
