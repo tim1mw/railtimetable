@@ -169,7 +169,7 @@ function railtimetable_today($attr) {
 }
 
 function railtimetable_smalltimetable($times, $heading, $extra = "") {
-
+    railtimetable_setlangage();
     $html = "<h4 style='text-align:center;margin-bottom:10px;'>".$heading."</h4>";
     $html .= $extra;
     $style = "style='vertical-align:top;padding:2px;background:#".$times[0]->background.";color:#".$times[0]->colour.";'";
@@ -215,6 +215,7 @@ function railtimetable_timesforstation($station, $stationfield, $date, $datesele
 
 function railtimetable_events($attr) {
     global $wpdb;
+    railtimetable_setlangage();
     $now = date("Y-m-d");
 
     // If it's after 19:00 then visitors probably want the next event.
@@ -246,8 +247,9 @@ function railtimetable_events($attr) {
 }
 
 function railtimetable_events_full() {
-     global $wpdb;
-     $found_events = $wpdb->get_results("SELECT id,title,link,start,end FROM {$wpdb->prefix}railtimetable_specialdates ORDER BY start ASC");
+    global $wpdb;
+    railtimetable_setlangage();
+    $found_events = $wpdb->get_results("SELECT id,title,link,start,end FROM {$wpdb->prefix}railtimetable_specialdates ORDER BY start ASC");
 
     $extra = "";
     if ($found_events) {
