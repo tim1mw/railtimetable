@@ -30,13 +30,13 @@ function railtimetable_show($attr) {
 
     $str="";
     for ($loop=intval($attr['start']); $loop<intval($attr['end'])+1; $loop++) {
-        $str .= "<div class='calendar-box-wrapper'>".$calendar->draw(date($attr['year']."-".$loop."-01"))."</div>";
+        $str .= "<div class='calendar-box-wrapper' id='railtimetable-cal-".$loop."'>".$calendar->draw(date($attr['year']."-".$loop."-01"))."</div>";
     }
 
-    $str .= '<script type="text/javascript">var baseurl = "'.railtimetable_currentlang()."/".get_site_url().'";var closetext="'.__("Close").'";initTrainTimes();</script>';
+    $str .= '<script type="text/javascript">var baseurl = "'.railtimetable_currentlang()."/".get_site_url().'";var closetext="'.__("Close").'";var firstmonth="'.$attr['start'].'";var lastmonth="'.$attr['end'].'";initTrainTimes();</script>';
     $str .= '<div id="railtimetable-modal"></div>';
 
-    return "<div class='calendar-wrapper'>".$str."</div>";
+    return "<div class='calendar-wrapper' id='railtimetable-cal'>".$str."</div>";
 }
 
 function railtimetable_times($attr) {

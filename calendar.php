@@ -94,6 +94,7 @@ class Calendar
 
         $running_day = clone $date;
         $running_day_count = 1;
+        $rowcount = 0;
 
         do {
             $timetable = $this->findTimetable($running_day);
@@ -156,6 +157,7 @@ class Calendar
         }
 
         $calendar .= '</tr>';
+
         $calendar .= '</tbody>';
         $calendar .= '</table>';
 
