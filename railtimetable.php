@@ -211,10 +211,35 @@ function railtimetable_timesforstation($station, $stationfield, $date, $datesele
 }
 
 function railtimetable_events($attr) {
-    return '<p><a href="/events"><img class="aligncenter size-small wp-image-697" '.
-        ' src="/wp-content/uploads/2018/03/003_small.jpg" alt="" width="300" height="200" /></a></p>'.
-        '<p>This will show the next special event (<strong>Gravity Train???</strong>) when we have a calendar from which to get it....</p>'.
-        '<p>In the mean time please look at our empty <a href="/events">special events page</a>.</p>';
+    global $wpdb;
+    $now = date("Y-m-d");
+
+    // If it's after 19:00 then visitors probably want the next event.
+    if (date('H') > 19) {
+        $datetime = new DateTime('tomorrow');
+        $now = $datetime->format('Y-m-d');
+    }
+
+    $found_events = $wpdb->get_results("SELECT id,title,link,start,end FROM {$wpdb->prefix}railtimetable_specialdates ".
+       "WHERE end >= '".$now."' LIMIT 2");
+
+    $extra = "";
+    if ($found_events) {
+        $extra .= "<ul>";
+        for ($loop=0; $loop<count($found_events); $loop++) {
+            $start = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->start);
+            $date = strftime("%e/%b/%Y", $start->getTimestamp());
+            if ($found_events[$loop]->start != $found_events[$loop]->end) {
+                $end = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->end);
+                $date .= " - ".strftime("%e/%b/%Y", $end->getTimestamp());
+            }
+
+            $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".$found_events[$loop]->link."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
+        }
+        $extra .= "</ul>";
+    }
+
+    return $extra;
 }
 
 function railtimetable_script()
@@ -322,11 +347,6 @@ function railtimetable_popup() {
 
 }
 
-function railtimetable_nextspecial() {
-    global $wpdb;
-
-    
-}
 
 add_shortcode('railtimetable_show', 'railtimetable_show');
 add_shortcode('railtimetable_times', 'railtimetable_times');
