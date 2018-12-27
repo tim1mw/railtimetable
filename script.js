@@ -31,9 +31,9 @@ function initTrainTimes() {
     var sele = document.getElementById("railtimetable-cal-"+firstmonth);
 
     var offsetblocks = mn - firstmonth;
-    var scroll = offsetblocks * sele.offsetWidth;
-    scroll = scroll - (ele.clientWidth/2);
-    scroll = scroll + (sele.clientWidth/2);
+    var scroll = offsetblocks * (sele.offsetWidth+4);
+    scroll = scroll - (ele.offsetWidth/2);
+    scroll = scroll + (sele.offsetWidth/2)+25;
     if (scroll > 0) {
         ele.scrollLeft = scroll;
     }
