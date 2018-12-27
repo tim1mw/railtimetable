@@ -30,7 +30,7 @@ function railtimetable_show($attr) {
         $lang = "/".pll_current_language()."/";
     }
 
-    $str .= '<script type="text/javascript">var baseurl = "'.$lang.get_site_url().'";var closetext="'.__("Close").'";</script>';
+    $str .= '<script type="text/javascript">var baseurl = "'.$lang.get_site_url().'";var closetext="'.__("Close").'";initTrainTimes();</script>';
     $str .= '<div id="railtimetable-modal"></div>';
 
     return "<div class='calendar-wrapper'>".$str."</div>";
@@ -195,6 +195,7 @@ function railtimetable_timesforstation($station, $stationfield, $date, $datesele
         "wp_railtimetable_dates.timetable, ".
         "wp_railtimetable_timetables.background, ".
         "wp_railtimetable_timetables.colour, ".
+        "wp_railtimetable_timetables.html, ".
         "wp_railtimetable_times.up_deps, ".
         "wp_railtimetable_times.down_deps, ".
         "wp_railtimetable_stations.name ".
@@ -295,6 +296,10 @@ function railtimetable_popup() {
         $first = railtimetable_timesforstation(0, "id", $date->format('Y-m-d'), "=");
         $last = railtimetable_timesforstation(2, "id", $date->format('Y-m-d'), "=");
         echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime("%e/%b/%Y", $date->getTimestamp()));
+
+        if (strlen($first[0]->html) > 0) {
+            echo railtimetable_trans($first[0]->html);
+        }
         exit();
    };
 

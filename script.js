@@ -1,7 +1,7 @@
 
 
-if (typeof closetext != "undefined") {
 
+function initTrainTimes() {
     jQuery( document ).ready( function() {
         jQuery( '#railtimetable-modal' ).dialog( {
             autoOpen: false,
