@@ -177,7 +177,7 @@ function railtimetable_today($attr) {
     }
 
     $nextd = new DateTime($times[0]->date);
-    $nextds = strftime("%e/%b/%Y", $nextd->getTimestamp());
+    $nextds = strftime("%e-%b-%Y", $nextd->getTimestamp());
 
     if ($times[0]->date == $now) {
         $heading .= __("Today's Trains", "railtimetable");
@@ -258,10 +258,10 @@ function railtimetable_events($attr) {
         $extra .= "<ul>";
         for ($loop=0; $loop<count($found_events); $loop++) {
             $start = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->start);
-            $date = strftime("%e/%b/%Y", $start->getTimestamp());
+            $date = strftime("%e-%b-%Y", $start->getTimestamp());
             if ($found_events[$loop]->start != $found_events[$loop]->end) {
                 $end = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->end);
-                $date .= " - ".strftime("%e/%b/%Y", $end->getTimestamp());
+                $date .= " - ".strftime("%e-%b-%Y", $end->getTimestamp());
             }
 
             $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".railtimetable_currentlang().$found_events[$loop]->link."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
@@ -282,10 +282,10 @@ function railtimetable_events_full() {
         $extra .= "<ul>";
         for ($loop=0; $loop<count($found_events); $loop++) {
             $start = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->start);
-            $date = strftime("%e/%b/%Y", $start->getTimestamp());
+            $date = strftime("%e-%b-%Y", $start->getTimestamp());
             if ($found_events[$loop]->start != $found_events[$loop]->end) {
                 $end = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->end);
-                $date .= " - ".strftime("%e/%b/%Y", $end->getTimestamp());
+                $date .= " - ".strftime("%e-%b-%Y", $end->getTimestamp());
             }
 
             $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".railtimetable_currentlang().$found_events[$loop]->link."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
@@ -391,7 +391,7 @@ function railtimetable_popup() {
 
         $first = railtimetable_timesforstation(0, "id", $date->format('Y-m-d'), "=");
         $last = railtimetable_timesforstation(2, "id", $date->format('Y-m-d'), "=");
-        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime("%e/%b/%Y", $date->getTimestamp()), $extra);
+        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime("%e-%b-%Y", $date->getTimestamp()), $extra);
 
         if (strlen($first[0]->html) > 0) {
             echo railtimetable_trans($first[0]->html);
