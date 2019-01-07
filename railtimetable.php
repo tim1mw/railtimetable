@@ -161,8 +161,8 @@ function railtimetable_today($attr) {
     $datetime = new DateTime('tomorrow');
     $tomorrow = $datetime->format('Y-m-d');
 
-    // If it's after 15:00 then visitors probably want tomorrows train times.
-    if (date('H') > 15) {
+    // If it's after 16:00 then visitors probably want tomorrows train times.
+    if (date('H') > 16) {
         $now = $tomorrow;
     }
 
