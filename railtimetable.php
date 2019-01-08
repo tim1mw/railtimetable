@@ -57,7 +57,7 @@ function railtimetable_times_all($attr) {
             railtimetable_render_times($tmetas[$loop]).'</div>';
     }
 
-    $html .= "<script type='text/javascript'>initAllTimetable();</script>";
+    $html .= "<script type='text/javascript'>initAllTimetable();</script></div>";
 
     return $html;
 }
