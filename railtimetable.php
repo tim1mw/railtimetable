@@ -24,6 +24,14 @@ function railtimetable_currentlang() {
     return "";
 }
 
+function railtimetable_currentlangfield() {
+    if (function_exists("pll_current_language")) {
+        return "link_".pll_current_language();
+    }
+
+    return "";
+}
+
 function railtimetable_show($attr) {
     railtimetable_setlangage();
     $calendar = new Calendar();
@@ -263,8 +271,8 @@ function railtimetable_events($attr) {
                 $end = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->end);
                 $date .= " - ".strftime("%e-%b-%Y", $end->getTimestamp());
             }
-
-            $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".railtimetable_currentlang().$found_events[$loop]->link."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
+            $linkfield = railtimetable_currentlangfield();
+            $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".$found_events[$loop]->$linkfield."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
         }
         $extra .= "</ul>";
     }
@@ -275,7 +283,7 @@ function railtimetable_events($attr) {
 function railtimetable_events_full() {
     global $wpdb;
     railtimetable_setlangage();
-    $found_events = $wpdb->get_results("SELECT id,title,link,start,end FROM {$wpdb->prefix}railtimetable_specialdates ORDER BY start ASC");
+    $found_events = $wpdb->get_results("SELECT id,title,link_en,link_cy,start,end FROM {$wpdb->prefix}railtimetable_specialdates ORDER BY start ASC");
 
     $extra = "";
     if ($found_events) {
@@ -287,8 +295,9 @@ function railtimetable_events_full() {
                 $end = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->end);
                 $date .= " - ".strftime("%e-%b-%Y", $end->getTimestamp());
             }
+            $linkfield = railtimetable_currentlangfield();
 
-            $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".railtimetable_currentlang().$found_events[$loop]->link."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
+            $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".$found_events[$loop]->$linkfield."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
         }
         $extra .= "</ul>";
     }
@@ -378,10 +387,11 @@ function railtimetable_popup() {
             "WHERE '".$date->format('Y-m-d')."' >= start AND '".$date->format('Y-m-d')."' <= end");
 
         $extra = "";
+        $linkfield = railtimetable_currentlangfield();
         if ($found_events) {
             $extra .= "<div style='margin-top:1em;margin-bottom:1em;'><h5>".__("Special Event").": ";
             for ($loop=0; $loop<count($found_events); $loop++) {
-                $extra .= "<a href='".railtimetable_currentlang().$found_events[$loop]->link."'>".pll__($found_events[$loop]->title)."</a>";
+                $extra .= "<a href='".$found_events[$loop]->$linkfield."'>".pll__($found_events[$loop]->title)."</a>";
                 if ($loop < count($found_events)-1) {
                     $extra .= " & ";
                 }
