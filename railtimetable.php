@@ -258,7 +258,7 @@ function railtimetable_events($attr) {
         $now = $datetime->format('Y-m-d');
     }
 
-    $found_events = $wpdb->get_results("SELECT id,title,link,start,end FROM {$wpdb->prefix}railtimetable_specialdates ".
+    $found_events = $wpdb->get_results("SELECT id,title,link_en,link_cy,start,end FROM {$wpdb->prefix}railtimetable_specialdates ".
        "WHERE end >= '".$now."' ORDER BY start ASC LIMIT ".$attr['number']);
 
     $extra = "";
@@ -383,7 +383,7 @@ function railtimetable_popup() {
         // Prevent SQL injection by parsing the date
         $date = DateTime::createFromFormat('Y-m-d', $_GET['date']);
 
-        $found_events = $wpdb->get_results("SELECT id,title,link FROM {$wpdb->prefix}railtimetable_specialdates ".
+        $found_events = $wpdb->get_results("SELECT id,title,link_en,link_cy FROM {$wpdb->prefix}railtimetable_specialdates ".
             "WHERE '".$date->format('Y-m-d')."' >= start AND '".$date->format('Y-m-d')."' <= end");
 
         $extra = "";
