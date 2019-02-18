@@ -187,11 +187,11 @@ function railtimetable_today($attr) {
     $nextd = new DateTime($times[0]->date);
     $nextds = strftime("%e-%b-%Y", $nextd->getTimestamp());
 
-    if ($times[0]->date == $now) {
-        $heading .= __("Today's Trains", "railtimetable");
+    if ($now == $tomorrow) {
+        $heading .= __("Tomorrow's Trains", "railtimetable");
     }
-    elseif ($times[0]->date == $tomorrow) {
-        $heading .= __("Tomorrows's Trains", "railtimetable");
+    elseif ($times[0]->date == $now) {
+        $heading .= __("Today's Trains", "railtimetable");
     }
     else {
         $heading .= __("Next trains on", "railtimetable")." ".$nextds;
