@@ -221,7 +221,7 @@ function railtimetable_smalltimetable($times, $heading, $extra = "") {
     }
     $html .= "</table>";
     if (strlen($times[0]->html) > 0) {
-        $html .= "<p style='margin-top:0px;text-align:right;'>".$times[0]->html."</p>";
+        $html .= "<p style='margin-top:0px;padding-top:0px;text-align:right;font-size:small;'>".$times[0]->html."</p>";
     }
     return $html;
 }
