@@ -219,9 +219,10 @@ function railtimetable_smalltimetable($times, $heading, $extra = "") {
         }
         $html .= "</td></tr>";
     }
-
     $html .= "</table>";
-
+    if (strlen($times[0]->html) > 0) {
+        $html .= "<p style='margin-top:0px;text-align:right;'>".$times[0]->html."</p>";
+    }
     return $html;
 }
 
