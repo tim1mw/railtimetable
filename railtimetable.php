@@ -14,7 +14,9 @@
 
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
+require_once(ABSPATH . 'wp-includes/pluggable.php');
 require_once('calendar.php');
+require_once('editlib.php');
 
 function railtimetable_currentlang() {
     if (function_exists("pll_current_language")) {
@@ -427,3 +429,4 @@ add_action( 'wp_enqueue_scripts', 'railtimetable_style' );
 
 add_action('parse_request', 'railtimetable_popup');
 
+?>
