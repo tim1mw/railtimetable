@@ -269,23 +269,39 @@ function railtimetable_events($attr) {
         $now = $datetime->format('Y-m-d');
     }
 
-    $found_events = $wpdb->get_results("SELECT id,title,link_en,link_cy,start,end FROM {$wpdb->prefix}railtimetable_specialdates ".
-       "WHERE end >= '".$now."' ORDER BY start ASC LIMIT ".$attr['number']);
+    $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE {$wpdb->prefix}railtimetable_eventdays.date > '".$now."' ORDER BY event,date ASC");
 
     $extra = "";
+    $linecount = 0;
     if ($found_events) {
-        $extra .= "<ul>";
-        for ($loop=0; $loop<count($found_events); $loop++) {
-            $start = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->start);
-            $date = strftime("%e-%b-%Y", $start->getTimestamp());
-            if ($found_events[$loop]->start != $found_events[$loop]->end) {
-                $end = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->end);
-                $date .= " - ".strftime("%e-%b-%Y", $end->getTimestamp());
+        $extra .= "<table>";
+        for ($loop=0; $loop<count($found_events) && $linecount<$attr['number']; $loop++) {
+            $start = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
+            $dates = array(strftime("%e-%b-%Y", $start->getTimestamp()));
+
+            $linkfield = railtimetable_currentlangcode();
+            $links = json_decode($found_events[$loop]->link);
+
+            for ($iloop=$loop+1; $iloop<count($found_events); $iloop++) {
+                if ($found_events[$loop]->id != $found_events[$iloop]->id) {
+                    $loop = $iloop - 1;
+                    break;
+                } else {
+                    $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$iloop]->date);
+                    $dates[] = strftime("%e-%b-%Y", $evtdate->getTimestamp());
+                }
             }
-            $linkfield = railtimetable_currentlangfield();
-            $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".$found_events[$loop]->$linkfield."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
+            $date = implode(', ', $dates);
+
+            $extra .= "<tr><td><a style='font-weight:bold;' class='timetable-special-front' href='".$links->$linkfield."'> ".pll__($found_events[$loop]->title)."</a></td><td>".$date."</td></tr>";
+            $linecount ++;
+
+            // If we have two events with the same ID at the end, we'll get a duplicate without this check.
+            if ($iloop == count($found_events)) {
+                break;
+            }
         }
-        $extra .= "</ul>";
+        $extra .= "</table>";
     }
 
     return $extra;
@@ -324,6 +340,11 @@ function railtimetable_events_full($attr) {
             }
             $date = implode(', ', $dates);
             $extra .= "<tr><td><a style='font-weight:bold;' class='timetable-special-front' href='".$links->$linkfield."'> ".pll__($found_events[$loop]->title)."</a></td><td>".$date."</td></tr>";
+
+            // If we have two events with the same ID at the end, we'll get a duplicate without this check.
+            if ($iloop == count($found_events)) {
+                break;
+            }
         }
         $extra .= "</table>";
     }
