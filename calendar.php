@@ -44,8 +44,7 @@ class Calendar
     {
         global $wpdb;
         $tdate = $date->format('Y-m-d');
-        $found_events = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_specialdates ".
-            "WHERE '".$tdate."' >= start AND '".$tdate."' <= end", OBJECT );
+        $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE {$wpdb->prefix}railtimetable_eventdays.date = '".$tdate."'", OBJECT );
 
         return ($found_events) ? : false;
     }
