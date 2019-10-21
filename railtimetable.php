@@ -310,14 +310,13 @@ function railtimetable_events($attr) {
 function railtimetable_events_full($attr) {
     global $wpdb;
     railtimetable_setlangage();
-
-    if (array_key_exists('year', $attr)) {
+    if (is_array($attr) && array_key_exists('year', $attr)) {
         $year = $attr['year'];
     } else {
-        $year = date("Y-m-d");
+        $year = date("Y");
     }
 
-    $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id  ORDER BY event,date ASC");
+    $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE date >= '".$year."-01-01' AND date <= '".$year."-12-31' ORDER BY event,date ASC");
 
     $extra = "";
     if ($found_events) {
