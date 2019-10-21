@@ -34,6 +34,14 @@ function railtimetable_currentlangfield() {
     return "";
 }
 
+function railtimetable_currentlangcode() {
+    if (function_exists("pll_current_language")) {
+        return pll_current_language();
+    }
+
+    return "none";
+}
+
 function railtimetable_show($attr) {
     railtimetable_setlangage();
     $calendar = new Calendar();
@@ -283,26 +291,34 @@ function railtimetable_events($attr) {
     return $extra;
 }
 
-function railtimetable_events_full() {
+function railtimetable_events_full($attr) {
     global $wpdb;
     railtimetable_setlangage();
-    $found_events = $wpdb->get_results("SELECT id,title,link_en,link_cy,start,end FROM {$wpdb->prefix}railtimetable_specialdates ORDER BY start ASC");
+    $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id  ORDER BY event,date ASC");
 
     $extra = "";
     if ($found_events) {
-        $extra .= "<ul>";
+        $extra .= "<table>";
         for ($loop=0; $loop<count($found_events); $loop++) {
-            $start = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->start);
-            $date = strftime("%e-%b-%Y", $start->getTimestamp());
-            if ($found_events[$loop]->start != $found_events[$loop]->end) {
-                $end = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->end);
-                $date .= " - ".strftime("%e-%b-%Y", $end->getTimestamp());
-            }
-            $linkfield = railtimetable_currentlangfield();
+            $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
+            $dates = array(strftime("%e-%b-%Y", $evtdate->getTimestamp()));
 
-            $extra .= "<li><a style='font-weight:bold;' class='timetable-special-front' href='".$found_events[$loop]->$linkfield."'>".$date.": ".pll__($found_events[$loop]->title)."</a></li>";
+            $linkfield = railtimetable_currentlangcode();
+            $links = json_decode($found_events[$loop]->link);
+
+            for ($iloop=$loop+1; $iloop<count($found_events); $iloop++) {
+                if ($found_events[$loop]->id != $found_events[$iloop]->id) {
+                    $loop = $iloop - 1;
+                    break;
+                } else {
+                    $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$iloop]->date);
+                    $dates[] = strftime("%e-%b-%Y", $evtdate->getTimestamp());
+                }
+            }
+            $date = implode(', ', $dates);
+            $extra .= "<tr><td><a style='font-weight:bold;' class='timetable-special-front' href='".$links->$linkfield."'> ".pll__($found_events[$loop]->title)."</a></td><td>".$date."</td></tr>";
         }
-        $extra .= "</ul>";
+        $extra .= "</table>";
     }
 
     return $extra;
