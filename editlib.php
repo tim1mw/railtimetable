@@ -140,12 +140,15 @@ function railtimetable_showcalendaredit($year, $month) {
     $daysinmonth = intval(date("t", mktime(0, 0, 0, $month, 1, $year)));
 
     $timetables = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_timetables");
+    $events = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails");
     ?>
     <form method='post' action=''>
     <input type='hidden' name='action' value='updatecalendar' />
     <input type='hidden' name='year' value='<?php echo $year; ?>' />
     <input type='hidden' name='month' value='<?php echo $month; ?>' />
     <table>
+    <tr><th>Day</th><th>Date</th><th>Timetable</th><th>Events</th></tr>
+    <tr>
     <?php
     for ($day = 1; $day < $daysinmonth + 1; $day++) {
         $time = mktime(0, 0, 0, $month, $day, $year);
@@ -173,14 +176,42 @@ function railtimetable_showcalendaredit($year, $month) {
             echo "<option value='".$timetables[$loop]->timetable."'".$s.">".ucfirst($timetables[$loop]->timetable)."</option>";
         }
 
-        echo "</select></td>".
-            "</tr>\n";
+        echo "</select></td>\n";
+        
+        $todaysevents = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_eventdays WHERE date = '".$year."-".$month."-".$day."'");
+        for ($loop=0; $loop<count($todaysevents); $loop++) {
+            railtimetable_showoptlist($events, $day, $todaysevents[$loop]->id, $todaysevents[$loop]->event);
+        }
+
+        railtimetable_showoptlist($events, $day);
+        
+        echo "</tr>\n";
     }
     ?>
     </table>
     <input type="submit" value="Update Timetable" />
     </form>
     <?php
+}
+
+function railtimetable_showoptlist($events, $day, $evtno = 'n', $selected = -1) {
+    echo "<td><select name='event_".$day."_".$evtno."'>";
+
+    if ($selected >= 0) {
+        echo "<option value='-1'>None</option>";
+    } else {
+        echo "<option value='-1' selected='selected'>None</option>";
+    }
+
+    for ($loop=0; $loop<count($events); $loop++) {
+        if ($selected == $events[$loop]->id) {
+            $s = " selected='selected' ";
+        } else {
+            $s = "";
+        }
+        echo "<option value='".$events[$loop]->id."'".$s.">".$events[$loop]->title."</option>";  
+    }
+    echo "</select></td>";
 }
 
 function railtimetable_updatecalendar() {
@@ -190,6 +221,7 @@ function railtimetable_updatecalendar() {
     $month = $_POST['month'];
     $daysinmonth = intval(date("t", mktime(0, 0, 0, $month, 1, $year)));
     for ($day = 1; $day < $daysinmonth + 1; $day++) {
+        // Do the timetable
         $newtt = $_POST['timetable_'.$day];
 
         $current = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_dates WHERE date = '".$year."-".$month."-".$day."'");
@@ -209,6 +241,26 @@ function railtimetable_updatecalendar() {
                 $wpdb->insert($wpdb->prefix.'railtimetable_dates', array('timetable' => $newtt, 'date' => $year."-".$month."-".$day));
             }
         }
+
+        //Do the events - find the existing ones and see if they have changed
+        $todaysevents = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_eventdays WHERE date = '".$year."-".$month."-".$day."'");
+        for ($loop=0; $loop<count($todaysevents); $loop++) {
+            $key = 'event_'.$day.'_'.$todaysevents[$loop]->id;
+            $value = $_POST[$key];
+            if ($value != $todaysevents[$loop]->event) {
+                if ($value == -1) {
+                    $wpdb->delete($wpdb->prefix.'railtimetable_eventdays', array('id' => $todaysevents[$loop]->id));
+                } else {
+                    $wpdb->update($wpdb->prefix.'railtimetable_eventdays', array('event' => $value, 'date' => $year."-".$month."-".$day), array('id' => $todaysevents[$loop]->id));
+                }
+            }
+        }
+
+        // Handle new events
+        if ($_POST['event_'.$day.'_n'] != -1) {
+            $wpdb->insert($wpdb->prefix.'railtimetable_eventdays', array('date' => $year."-".$month."-".$day, 'event' => $_POST['event_'.$day.'_n']));
+        }
+        
     }
 }
 
