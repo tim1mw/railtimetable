@@ -294,6 +294,13 @@ function railtimetable_events($attr) {
 function railtimetable_events_full($attr) {
     global $wpdb;
     railtimetable_setlangage();
+
+    if (array_key_exists('year', $attr)) {
+        $year = $attr['year'];
+    } else {
+        $year = date("Y-m-d");
+    }
+
     $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id  ORDER BY event,date ASC");
 
     $extra = "";
@@ -373,7 +380,7 @@ function railtimetable_load_textdomain() {
 
     if (function_exists('pll_register_string')) {
         global $wpdb;
-        $events = $wpdb->get_results("SELECT id,title FROM {$wpdb->prefix}railtimetable_specialdates");
+        $events = $wpdb->get_results("SELECT id,title,description FROM {$wpdb->prefix}railtimetable_eventdetails");
         foreach ($events as $event) {
             pll_register_string("railtimetable_title_".$event->id, $event->title, "railtimetable");
             //pll_register_string("railtimetable_desc_".$event->id, $event->description, "railtimetable");
