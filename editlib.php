@@ -18,6 +18,7 @@ function mt_add_pages() {
 }
 
 function railtimetable_edit() {
+    global $wpdb;
     ?>
     <h1>Heritage Railway Timetable</h1>
     <p>Show some kind of summary here....</p>
@@ -29,12 +30,14 @@ function railtimetable_edit() {
                 railtimetable_convertevents();
         }
     }
+    if ($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}railtimetable_eventdetails" ) == 0) {
     ?>
     <form action='' method='post'>
     <input type='hidden' name='action' value='convertevents' />
     <input type='submit' value='Convert Events Tables' />
     </form>
     <?php
+    }
 }
 
 function railtimetable_edit_stations() {
