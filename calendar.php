@@ -111,6 +111,9 @@ class Calendar
                 $class .= " calendar-special ";
                 for ($loop=0; $loop< count($specials); $loop++) {
                     $event_summary .= railtimetable_trans($specials[$loop]->title);
+                    if (strlen($specials[$loop]->background) > 0 || strlen($specials[$loop]->colour) > 0) {
+                        $style .= "background:#".$specials[$loop]->background.";color:#".$specials[$loop]->colour.";";
+                    }
                     if ($loop < count($specials)-1) {
                         $event_summary .= " & ";
                     }
@@ -123,10 +126,19 @@ class Calendar
             if ($timetable) {
                 $calendar .= "<a style='".$style."'  href=\"javascript:showTrainTimes('".$running_day->format("Y-m-d")."');\">";
                 $calendar .= $running_day->format('j');
-                $calendar .= '</a></td>';
+                $calendar .= '</a>';
             } else {
-                $calendar .= $running_day->format('j');
+                if ($specials) {
+                    $linkfield = railtimetable_currentlangcode();
+                    $links = json_decode(end($specials)->link);
+                    $calendar .= "<a style='".$style."'  href=\"".$links->$linkfield."\">";
+                    $calendar .= $running_day->format('j');
+                    $calendar .= '</a>';
+                } else {
+                    $calendar .= $running_day->format('j');
+                }
             }
+            $calendar .= "</td>";
 
             # check if this calendar-row is full and if so push to a new calendar row
             if ($running_day->format('w') == 6) {
