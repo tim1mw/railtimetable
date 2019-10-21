@@ -43,24 +43,15 @@ function initTrainTimes() {
 
     var d = new Date();
     var mn = d.getMonth()+1;
-    if (mn < firstmonth) {
-        mn = firstmonth;
-    } else {
-        if (mn > lastmonth) {
-            mn = lastmonth;
-        }
-    }
+    var year = d.getFullYear();
 
     var ele = document.getElementById("railtimetable-cal");
-    var sele = document.getElementById("railtimetable-cal-"+firstmonth);
+    var key = "railtimetable-cal-"+scrollto;
+    var sele = document.getElementById(key);
 
-    var offsetblocks = mn - firstmonth;
-    var scroll = offsetblocks * (sele.offsetWidth+4);
-    scroll = scroll - (ele.offsetWidth/2);
-    scroll = scroll + (sele.offsetWidth/2)+25;
-    if (scroll > 0) {
-        ele.scrollLeft = scroll;
-    }
+    sele.scrollIntoView({behavior: 'auto',
+        block: 'center',
+        inline: 'center' });
 }
 
 function showTrainTimes(date) {

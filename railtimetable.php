@@ -63,7 +63,9 @@ function railtimetable_show($attr) {
          $stop = $endmonth+1;
     }
 
-    $str .= '<script type="text/javascript">var baseurl = "'.railtimetable_currentlang()."/".get_site_url().'";var closetext="'.__("Close").'";var firstmonth="'.$attr['start'].'";var lastmonth="'.$attr['end'].'";initTrainTimes();</script>';
+    $scroll = date("Y-n");
+
+    $str .= '<script type="text/javascript">var baseurl = "'.railtimetable_currentlang()."/".get_site_url().'";var closetext="'.__("Close").'";var scrollto="'.$scroll.'"; initTrainTimes();</script>';
     $str .= '<div id="railtimetable-modal"></div>';
 
     return "<div class='calendar-wrapper' id='railtimetable-cal'>".$str."</div>";
