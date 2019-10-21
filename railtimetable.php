@@ -46,9 +46,21 @@ function railtimetable_show($attr) {
     railtimetable_setlangage();
     $calendar = new Calendar();
 
+    $start = explode('-', $attr['start']);
+    $startyear = intval($start[0]);
+    $startmonth = intval($start[1]);
+    $end = explode('-', $attr['end']);
+    $endyear = intval($end[0]);
+    $endmonth = intval($end[1]);
+    $stop = 13;
+
     $str="";
-    for ($loop=intval($attr['start']); $loop<intval($attr['end'])+1; $loop++) {
-        $str .= "<div class='calendar-box-wrapper' id='railtimetable-cal-".$loop."'>".$calendar->draw(date($attr['year']."-".$loop."-01"))."</div>";
+    for ($year=$startyear; $year<$endyear+1; $year++) {
+        for ($month=$startmonth; $month<$stop; $month++) {
+            $str .= "<div class='calendar-box-wrapper' id='railtimetable-cal-".$year."-".$month."'>".$calendar->draw(date($year."-".$month."-01"))."</div>";
+         }
+         $startmonth = 1;
+         $stop = $endmonth+1;
     }
 
     $str .= '<script type="text/javascript">var baseurl = "'.railtimetable_currentlang()."/".get_site_url().'";var closetext="'.__("Close").'";var firstmonth="'.$attr['start'].'";var lastmonth="'.$attr['end'].'";initTrainTimes();</script>';
