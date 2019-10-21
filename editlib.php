@@ -21,6 +21,19 @@ function railtimetable_edit() {
     ?>
     <h1>Heritage Railway Timetable</h1>
     <p>Show some kind of summary here....</p>
+
+    <?php
+    if (array_key_exists('action', $_POST)) {
+        switch ($_POST['action']) {
+            case 'convertevents':
+                railtimetable_convertevents();
+        }
+    }
+    ?>
+    <form action='' method='post'>
+    <input type='hidden' name='action' value='convertevents' />
+    <input type='submit' value='Convert Events Tables' />
+    </form>
     <?php
 }
 
@@ -175,7 +188,6 @@ function railtimetable_updatecalendar() {
     $daysinmonth = intval(date("t", mktime(0, 0, 0, $month, 1, $year)));
     for ($day = 1; $day < $daysinmonth + 1; $day++) {
         $newtt = $_POST['timetable_'.$day];
-        echo $day." ".$newtt;
 
         $current = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_dates WHERE date = '".$year."-".$month."-".$day."'");
         if ($current) {
@@ -193,6 +205,48 @@ function railtimetable_updatecalendar() {
             if ($newtt != "none") {
                 $wpdb->insert($wpdb->prefix.'railtimetable_dates', array('timetable' => $newtt, 'date' => $year."-".$month."-".$day));
             }
+        }
+    }
+}
+
+function railtimetable_convertevents() {
+    global $wpdb;
+
+    $found_events = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_specialdates ORDER BY start ASC");
+
+    for ($loop=0; $loop<count($found_events); $loop++) {
+        $this_event = $found_events[$loop];
+        $checknew = $wpdb->get_results(
+            $wpdb->prepare("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails WHERE title = %s", $this_event->title));
+        if ($checknew) {
+            $id = reset($checknew)->id;
+        } else {
+            $link = json_encode(array('en' => $this_event->link_en, 'cy' => $this_event->link_cy));
+            $newevt = array('title' => $this_event->title,
+                'description' => $this_event->description,
+                'link' => $link);
+            $wpdb->insert($wpdb->prefix.'railtimetable_eventdetails', $newevt);
+            $checknew = $wpdb->get_results(
+                $wpdb->prepare("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails WHERE title= %s", $this_event->title));
+            $id = reset($checknew)->id;
+        }
+
+        if ($this_event->start == $this_event->end) {
+            $evtd = array('date' => $this_event->start, 'event' => $id);
+            $wpdb->insert($wpdb->prefix.'railtimetable_eventdays', $evtd);
+        } else {
+            $begin = new DateTime($this_event->start);
+            $end = new DateTime($this_event->end);
+
+            $interval = DateInterval::createFromDateString('1 day');
+            $period = new DatePeriod($begin, $interval, $end);
+
+            foreach ($period as $dt) {
+                $evtd = array('date' => $dt->format("Y-m-d"), 'event' => $id);
+                $wpdb->insert($wpdb->prefix.'railtimetable_eventdays', $evtd);
+            }
+            $evtd = array('date' => $this_event->end, 'event' => $id);
+            $wpdb->insert($wpdb->prefix.'railtimetable_eventdays', $evtd);
         }
     }
 }
