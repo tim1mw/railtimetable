@@ -409,15 +409,15 @@ function railtimetable_popup() {
         // Prevent SQL injection by parsing the date
         $date = DateTime::createFromFormat('Y-m-d', $_GET['date']);
 
-        $found_events = $wpdb->get_results("SELECT id,title,link_en,link_cy FROM {$wpdb->prefix}railtimetable_specialdates ".
-            "WHERE '".$date->format('Y-m-d')."' >= start AND '".$date->format('Y-m-d')."' <= end");
+        $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE {$wpdb->prefix}railtimetable_eventdays.date = '".$date->format('Y-m-d')."'");
 
         $extra = "";
-        $linkfield = railtimetable_currentlangfield();
+        $linkfield = railtimetable_currentlangcode();
         if ($found_events) {
             $extra .= "<div style='margin-top:1em;margin-bottom:1em;'><h5>".__("Special Event").": ";
             for ($loop=0; $loop<count($found_events); $loop++) {
-                $extra .= "<a href='".$found_events[$loop]->$linkfield."'>".pll__($found_events[$loop]->title)."</a>";
+                $links = json_decode($found_events[$loop]->link);
+                $extra .= "<a href='".$links->$linkfield."'>".pll__($found_events[$loop]->title)."</a>";
                 if ($loop < count($found_events)-1) {
                     $extra .= " & ";
                 }
