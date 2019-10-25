@@ -41,10 +41,91 @@ function railtimetable_edit() {
 }
 
 function railtimetable_edit_stations() {
+    global $wpdb;
+
+    if (array_key_exists('action', $_POST)) {
+        switch ($_POST['action']) {
+            case 'editstations':
+                railtimetable_updatestations();
+        }
+    }
+
     ?>
     <h1>Heritage Railway Timetable - Stations</h1>
-
+    <form method='post' action=''>
+    <input type='hidden' name='action' value='editstations' />
+    <table><tr><th>Station</th><th>Actions</th><tr>
     <?php
+    $ids = array();
+    $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
+    $count = count($stations);
+    for ($loop = 0; $loop < $count; $loop++) {
+        $ids[] = $stations[$loop]->id;
+        echo "<tr>".
+            "<td>".($stations[$loop]->sequence+1).
+            ": <input type='text' name='station_name_".$stations[$loop]->id."' size='25' value='".$stations[$loop]->name."' /></td><td>";
+
+        echo "<button name='station_del_".$stations[$loop]->id."'>X</button>&nbsp;&nbsp;";
+
+        if ($stations[$loop]->sequence < $count -1) {
+            echo "<button name='station_move_".$stations[$loop]->id."' value='1'>&darr;</button>";
+        }
+
+        if ($stations[$loop]->sequence > 0) {
+            echo "<button name='station_move_".$stations[$loop]->id."' value='-1'>&uarr;</button>";
+        }
+
+        echo "</td></tr>";
+    }
+    ?>
+    <tr><th colspan="">New Station</th></tr>
+    <tr>
+        <td><input type='text' size='25' name='station_name_new' value='' /></td>
+        <td></td>
+    </tr>
+    </table>
+    <input type='hidden' name='ids' value='<?php echo implode(",",$ids) ?>' />
+    <input type="submit" value="Update Stations" />
+    </form>
+    <?php
+}
+
+function railtimetable_updatestations() {
+    global $wpdb;
+
+    if (strlen( $_POST['ids'] > 0)) {
+        $ids = explode(',', $_POST['ids']);
+    } else {
+        $ids = array();
+    }
+
+    foreach ($ids as $id) {
+        if (array_key_exists('station_del_'.$id, $_POST)) {
+            $wpdb->delete($wpdb->prefix.'railtimetable_stations',  array('id' => $id));
+            // Now fix the sequence....
+            $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
+
+            for ($loop = 0; $loop < count($stations); $loop++) {
+
+                $wpdb->update($wpdb->prefix.'railtimetable_stations', array('sequence' => $loop),  array('id' => $stations[$loop]->id));
+            }
+            continue;
+        }
+
+        $params = array('name' => $_POST['station_name_'.$id]);
+        if (array_key_exists('station_move_'.$id, $_POST)) {
+            $inc = intval($_POST['station_move_'.$id]);
+            $current = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations WHERE id = '".$id."'")[0];
+            $swap = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations WHERE sequence = '".($current->sequence+$inc)."'")[0];
+            $wpdb->update($wpdb->prefix.'railtimetable_stations', array('sequence' => $current->sequence),  array('id' => $swap->id));
+            $params['sequence'] = $swap->sequence;
+        }
+        $wpdb->update($wpdb->prefix.'railtimetable_stations', $params,  array('id' => $id));
+    }
+
+    if (strlen($_POST['station_name_new']) > 0) {
+        $wpdb->insert($wpdb->prefix.'railtimetable_stations', array('name' => trim($_POST['station_name_new']), 'sequence' => count($ids)));
+    }
 }
 
 function railtimetable_edit_timetable() {
