@@ -202,7 +202,28 @@ function railtimetable_today($attr) {
         $results = railtimetable_timesforstation($station, "name", $now, ">=");
 
         if (!$results) {
-            return $html.__("No trains today");
+            /** There are no trains, but some special events may not have a timetable allocated, so check for that... **/
+            $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE {$wpdb->prefix}railtimetable_eventdays.date = '".$now."'", OBJECT );
+
+            if (!$found_events) {
+                if ($now == $tomorrow) {
+                    return "<h4 style='text-align:center;margin-bottom:10px;'>".__("No trains tomorrow")."</h4>";
+                } else {
+                    return "<h4 style='text-align:center;margin-bottom:10px;'>".__("No trains today")."</h4>";
+                }
+            }
+            $linkfield = railtimetable_currentlangcode();
+
+            for ($loop = 0; $loop < count($found_events); $loop++) {
+                $links = json_decode($found_events[$loop]->link);
+                $html = "<a style='font-weight:bold;' class='timetable-special-front' href='".$links->$linkfield."'>".__($found_events[$loop]->title)."</a><p>".__($found_events[$loop]->description)."</p>";
+            }
+
+            if ($now == $tomorrow) {
+                return "<h4 style='text-align:center;margin-bottom:10px;'>".__("Tomorrow's Trains")."</h4>".$html;
+            } else {
+                return "<h4 style='text-align:center;margin-bottom:10px;'>".__("Today's Trains")."</h4>".$html;
+            }
         }
 
         $times[$index] = $results[0];
