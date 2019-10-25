@@ -108,7 +108,7 @@ function railtimetable_times($attr) {
 
 function railtimetable_render_times($tmeta) {
     global $wpdb;
-    $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations");
+    $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
     $text = "<div class='timetable-wrapper'><table style='margin-left:auto;margin-right:auto;'>";
 
     $text .= "<tr><td class='timetable-header' style='background:#".$tmeta->background.";color:#".$tmeta->colour.";' colspan='2'>".__("Timetable", "railtimetable").":&nbsp;".railtimetable_trans($tmeta->timetable)."</td>";
