@@ -138,7 +138,7 @@ function railtimetable_times_thalf($stations, $dir, $timetable) {
     global $wpdb;
     $text = "";
     foreach ($stations as $station) {
-        $times = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_times WHERE timetable='".$timetable."' AND station=".$station->id);
+        $times = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_times WHERE timetable='".$timetable."' AND station=".$station->sequence);
 
         $text .= "<tr><td>".$station->name."</td>";
 
@@ -285,7 +285,7 @@ function railtimetable_timesforstation($station, $stationfield, $date, $datesele
         "FROM `wp_railtimetable_dates` ".
         "LEFT JOIN wp_railtimetable_timetables ON wp_railtimetable_dates.timetable =  wp_railtimetable_timetables.timetable ".
         "LEFT JOIN wp_railtimetable_times ON wp_railtimetable_timetables.timetable = wp_railtimetable_times.timetable ".
-        "LEFT JOIN wp_railtimetable_stations ON wp_railtimetable_times.station = wp_railtimetable_stations.id ".
+        "LEFT JOIN wp_railtimetable_stations ON wp_railtimetable_times.station = wp_railtimetable_stations.sequence ".
         "WHERE wp_railtimetable_dates.date ".$dateselector." '".$date."' ".
         "AND wp_railtimetable_stations.".$stationfield." = '".$station."' ".
         "ORDER BY wp_railtimetable_dates.date ASC ".
@@ -480,8 +480,11 @@ function railtimetable_popup() {
             $extra .= "</h5></div>";
         }
 
-        $first = railtimetable_timesforstation(0, "id", $date->format('Y-m-d'), "=");
-        $last = railtimetable_timesforstation(2, "id", $date->format('Y-m-d'), "=");
+        // Get the first station
+        $numstations = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
+
+        $first = railtimetable_timesforstation(0, "sequence", $date->format('Y-m-d'), "=");
+        $last = railtimetable_timesforstation($numstations - 1, "sequence", $date->format('Y-m-d'), "=");
         echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime("%e-%b-%Y", $date->getTimestamp()), $extra);
 
         if (strlen($first[0]->html) > 0) {
