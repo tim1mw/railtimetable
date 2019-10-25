@@ -69,6 +69,8 @@ function railtimetable_edit_stations() {
 
         if ($stations[$loop]->sequence < $count -1) {
             echo "<button name='station_move_".$stations[$loop]->id."' value='1'>&darr;</button>";
+        } else {
+           echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
         }
 
         if ($stations[$loop]->sequence > 0) {
