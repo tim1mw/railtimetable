@@ -129,10 +129,10 @@ function railtimetable_render_times($tmeta) {
 
     $text.= "</tr>";
 
-    $text .= railtimetable_times_thalf($stations, "down", $tmeta->timetable);
+    $text .= railtimetable_times_thalf($stations, "down", $tmeta->id);
     $text .= "<tr><td colspan='".($tmeta->totaltrains+2)."'></td></tr>";
     $stations = array_reverse($stations);
-    $text .= railtimetable_times_thalf($stations, "up", $tmeta->timetable);
+    $text .= railtimetable_times_thalf($stations, "up", $tmeta->id);
     $text .= "</table>";
 
     if (strlen($tmeta->html) > 0) {
@@ -147,7 +147,7 @@ function railtimetable_times_thalf($stations, $dir, $timetable) {
     global $wpdb;
     $text = "";
     foreach ($stations as $station) {
-        $times = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_times WHERE timetable='".$timetable."' AND station=".$station->sequence);
+        $times = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_times WHERE timetableid='".$timetable."' AND station=".$station->sequence);
 
         $text .= "<tr><td>".$station->name."</td>";
 
@@ -284,7 +284,7 @@ function railtimetable_timesforstation($station, $stationfield, $date, $datesele
     global $wpdb;
     $results = $wpdb->get_results("SELECT ".
         "wp_railtimetable_dates.date, ".
-        "wp_railtimetable_dates.timetable, ".
+        "wp_railtimetable_timetables.timetable, ".
         "wp_railtimetable_timetables.background, ".
         "wp_railtimetable_timetables.colour, ".
         "wp_railtimetable_timetables.html, ".
@@ -292,8 +292,8 @@ function railtimetable_timesforstation($station, $stationfield, $date, $datesele
         "wp_railtimetable_times.down_deps, ".
         "wp_railtimetable_stations.name ".
         "FROM `wp_railtimetable_dates` ".
-        "LEFT JOIN wp_railtimetable_timetables ON wp_railtimetable_dates.timetable =  wp_railtimetable_timetables.timetable ".
-        "LEFT JOIN wp_railtimetable_times ON wp_railtimetable_timetables.timetable = wp_railtimetable_times.timetable ".
+        "LEFT JOIN wp_railtimetable_timetables ON wp_railtimetable_dates.timetableid =  wp_railtimetable_timetables.id ".
+        "LEFT JOIN wp_railtimetable_times ON wp_railtimetable_timetables.id = wp_railtimetable_times.timetableid ".
         "LEFT JOIN wp_railtimetable_stations ON wp_railtimetable_times.station = wp_railtimetable_stations.sequence ".
         "WHERE wp_railtimetable_dates.date ".$dateselector." '".$date."' ".
         "AND wp_railtimetable_stations.".$stationfield." = '".$station."' ".

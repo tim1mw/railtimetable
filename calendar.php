@@ -29,7 +29,7 @@ class Calendar
         global $wpdb;
         $found_events = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_dates ".
             "LEFT JOIN {$wpdb->prefix}railtimetable_timetables ON ".
-            " {$wpdb->prefix}railtimetable_dates.timetable = {$wpdb->prefix}railtimetable_timetables.timetable ".
+            " {$wpdb->prefix}railtimetable_dates.timetableid = {$wpdb->prefix}railtimetable_timetables.id ".
             "WHERE {$wpdb->prefix}railtimetable_dates.date = '".$date->format('Y-m-d')."'", OBJECT );
 
         return ($found_events[0]) ? : false;
