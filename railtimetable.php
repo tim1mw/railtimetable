@@ -123,8 +123,13 @@ function railtimetable_render_times($tmeta) {
     $text .= "<tr><td class='timetable-header' style='background:#".$tmeta->background.";color:#".$tmeta->colour.";' colspan='2'>".__("Timetable", "railtimetable").":&nbsp;".railtimetable_trans($tmeta->timetable)."</td>";
 
     $headers = explode(",", $tmeta->colsmeta);
-    foreach ($headers as $header) {
-        $text .= "<td style='background:#".$tmeta->background.";color:#".$tmeta->colour.";'>".railtimetable_trans($header)."</td>";
+    for ($loop=0; $loop < $tmeta->totaltrains; $loop++) {
+        if (array_key_exists($loop, $headers)) {
+            $header = railtimetable_trans($headers[$loop]);
+        } else {
+            $header = "";
+        }
+        $text .= "<td style='background:#".$tmeta->background.";color:#".$tmeta->colour.";'>".$header."</td>";
     }
 
     $text.= "</tr>";
@@ -149,22 +154,22 @@ function railtimetable_times_thalf($stations, $dir, $timetable) {
     foreach ($stations as $station) {
         $times = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_times WHERE timetableid='".$timetable."' AND station=".$station->sequence);
 
-        $text .= "<tr><td>".$station->name."</td>";
-
-        $keydeps = $dir."_deps";
         $keyarrs = $dir."_arrs";
-
-        if (strlen($times[0]->$keydeps) > 0) {
-            $text .= "<td>".__("dep", "railtimetable")."</td>";
-            $text .= railtimetable_times_gettimes($times[0]->$keydeps);
-        }
+        $keydeps = $dir."_deps";
 
         if (strlen($times[0]->$keyarrs) > 0) {
+            $text .= "<tr><td>".$station->name."</td>";
             $text .= "<td>".__("arr", "railtimetable")."</td>";
             $text .= railtimetable_times_gettimes($times[0]->$keyarrs);
+            $text .= "</tr>";
         }
 
-        $text .= "</tr>";
+        if (strlen($times[0]->$keydeps) > 0) {
+            $text .= "<tr><td>".$station->name."</td>";
+            $text .= "<td>".__("dep", "railtimetable")."</td>";
+            $text .= railtimetable_times_gettimes($times[0]->$keydeps);
+            $text .= "</tr>";
+        }
     }
     return $text;
 }
