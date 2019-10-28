@@ -42,6 +42,15 @@ function railtimetable_currentlangcode() {
     return "none";
 }
 
+function railtimetable_alllangcode() {
+    if (function_exists("pll_languages_list")) {
+        return pll_languages_list('locale');
+    }
+
+    return array('default' => '');;
+}
+
+
 function railtimetable_show($attr) {
     railtimetable_setlangage();
     $calendar = new Calendar();

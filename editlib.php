@@ -12,7 +12,9 @@ function mt_add_pages() {
 
     add_submenu_page('railtimetable-top-level-handle', __('Edit Stations','railtimetable'), __('Edit Stations','railtimetable'), 'manage_options', 'railtimetable-edit-stations', 'railtimetable_edit_stations');
 
-    add_submenu_page('railtimetable-top-level-handle', __('Edit Timetable','railtimetable'), __('Edit Timetable','railtimetable'), 'manage_options', 'railtimetable-edit-timetable', 'railtimetable_edit_timetable');
+    add_submenu_page('railtimetable-top-level-handle', __('Edit Timetables','railtimetable'), __('Edit Timetables','railtimetable'), 'manage_options', 'railtimetable-edit-timetable', 'railtimetable_edit_timetable');
+
+    add_submenu_page('railtimetable-top-level-handle', __('Edit Events','railtimetable'), __('Edit Events','railtimetable'), 'manage_options', 'railtimetable-edit-events', 'railtimetable_edit_events');
 
     add_submenu_page('railtimetable-top-level-handle', __('Edit Calendar','railtimetable'), __('Edit Calendar','railtimetable'), 'manage_options', 'railtimetable-edit-calendar', 'railtimetable_edit_calendar');
 }
@@ -132,7 +134,130 @@ function railtimetable_updatestations() {
 
 function railtimetable_edit_timetable() {
     ?>
-    <h1>Heritage Railway Timetable - Edit Timetable</h1>
+    <h1>Heritage Railway Timetable - Edit Timetables</h1>
+    <?php
+}
+
+function railtimetable_edit_events() {
+    global $wpdb;
+
+    if (array_key_exists('action', $_POST)) {
+        if ($_POST['action'] == 'editevent') {
+            $langs = railtimetable_alllangcode();
+            $links = array();
+            foreach ($langs as $lang) {
+                $links[$lang] = $_POST["link_".$lang];
+            }
+
+            $linksjson = json_encode($links);
+            $params = array('title' => stripslashes($_POST['title']), 'description' => stripslashes($_POST['desc']), 'link' => $linksjson, 'background' => trim($_POST['background']), 'colour' => trim($_POST['colour']));
+            if (intval($id) > -1) {
+                $wpdb->update($wpdb->prefix.'railtimetable_eventdetails', $params,
+                    array('id' => $_POST['id']));
+            } else {
+                $wpdb->insert($wpdb->prefix.'railtimetable_eventdetails', $params);
+            }
+        }
+    }
+
+    // Do we have any edit or delete actions?
+    if (array_key_exists('edit', $_POST)) {
+        $evt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails WHERE id='".$_POST['edit']."' ");
+        echo "<h2>Update Event</h2>";
+        railtimetable_edit_event($_POST['edit'], $evt->title, $evt->description, $evt->link, $evt->background, $evt->colour, $button="Update Event");
+        return;
+    }
+
+    if (array_key_exists('del', $_POST)) {
+        $evt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails WHERE id='".$_POST['del']."' ");
+        if (array_key_exists('confirm', $_POST)) {
+            $wpdb->delete($wpdb->prefix."railtimetable_eventdetails", array('id' => $_POST['del']));
+            $wpdb->delete($wpdb->prefix."railtimetable_eventdays", array('event' => $_POST['del']));
+            ?>
+            <h2>"<?php echo $evt->title; ?>" Deleted.</h2>
+            <?php
+        } else {
+            ?>
+            <form method='post' action=''>
+                <h2>Are you sure you want to delete the event "<?php echo $evt->title; ?>" ?</h2>
+                <input type='hidden' name='confirm' value='1' />
+                <input type='hidden' name='del' value='<?php echo $evt->id; ?>' />
+                <input type='submit' value='Delete Event' />
+            </form>
+            <?php
+            return;
+        }
+    }
+
+    ?>
+    <h1>Heritage Railway Timetable - Edit Events</h1>
+    <form method='post' action=''>
+    <table><tr>
+        <th>Event Name</th>
+        <th>Actions</th>
+    </tr>
+    <?php
+    $events = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails");
+    for ($loop = 0; $loop < count($events); $loop++) {
+        ?>
+        <tr>
+            <td><?php echo $events[$loop]->title; ?></td>
+            <td>
+                <button type='hidden' name='edit' value='<?php echo $events[$loop]->id; ?>'>Edit</button>
+                <button type='hidden' name='del' value='<?php echo $events[$loop]->id; ?>'>Delete</button>
+            </td>
+        </tr>
+        <?php
+    }
+    ?>
+    </table>
+    </form>
+    <hr />
+    <?php
+
+    ?><h2>Add new event</h2><?php
+    railtimetable_edit_event();
+}
+
+function railtimetable_edit_event($id=-1, $title="", $desc="", $linkjson="", $bg ="", $colour = "", $button="Add Event") {
+    ?>
+    <form method='post' action=''>
+        <input type='hidden' name='action' value='editevent' />
+        <input type='hidden' name='id' value='<?php echo htmlspecialchars($id); ?>' /> 
+        <table><tr>
+            <td>Title</td>
+            <td><input type='text' name='title' size='50' value='<?php echo htmlspecialchars($title, ENT_QUOTES); ?>' /></td>
+        </tr><tr>
+            <td>Description</td>
+            <td><textarea name='desc' cols='80' rows='5'><?php echo htmlspecialchars($desc, ENT_QUOTES); ?></textarea></td>
+        </tr><?php
+            if (strlen($linkjson) > 0) {
+                $links = json_decode($linkjson);
+            } else {
+                $langs = railtimetable_alllangcode();
+                $links = array();
+                foreach ($langs as $lang) {
+                    $links[$lang] = '';
+                }
+            }
+
+            foreach ($links as $linklang => $linkvalue) {
+                echo "<tr>\n<td>Link ".$linklang."</td>\n".
+                    "<td><input type='text' size='80' value='".$linkvalue."' name='link_".$linklang."' /></td>".
+                    "</tr>";
+            }
+
+        ?><tr>
+            <td>Background colour</td>
+            <td><input type='text' name='background' size='6' value='<?php echo htmlspecialchars($bg); ?>' /></td>
+        </tr><tr>
+            <td>Text colour</td>
+            <td><input type='text' name='colour' size='6' value='<?php echo htmlspecialchars($colour); ?>' /></td>
+        </tr><tr>
+            <td></td>
+            <td><input type='submit' value='<?php echo $button; ?>' /></td>
+        </tr></table>
+    </form>
     <?php
 }
 
