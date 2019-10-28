@@ -12,7 +12,7 @@ function mt_add_pages() {
 
     add_submenu_page('railtimetable-top-level-handle', __('Edit Stations','railtimetable'), __('Edit Stations','railtimetable'), 'manage_options', 'railtimetable-edit-stations', 'railtimetable_edit_stations');
 
-    add_submenu_page('railtimetable-top-level-handle', __('Edit Timetables','railtimetable'), __('Edit Timetables','railtimetable'), 'manage_options', 'railtimetable-edit-timetable', 'railtimetable_edit_timetable');
+    add_submenu_page('railtimetable-top-level-handle', __('Edit Timetables','railtimetable'), __('Edit Timetables','railtimetable'), 'manage_options', 'railtimetable-edit-timetable', 'railtimetable_edit_timetables');
 
     add_submenu_page('railtimetable-top-level-handle', __('Edit Events','railtimetable'), __('Edit Events','railtimetable'), 'manage_options', 'railtimetable-edit-events', 'railtimetable_edit_events');
 
@@ -132,10 +132,120 @@ function railtimetable_updatestations() {
     }
 }
 
-function railtimetable_edit_timetable() {
+function railtimetable_edit_timetables() {
+    global $wpdb;
+
+    if (array_key_exists('action', $_POST)) {
+        switch ($_POST['action']) {
+            case 'edittimetable':
+                railtimetable_updatetimetable();
+        }
+    }
+
+    // Do we have any edit or delete actions?
+    if (array_key_exists('edit', $_POST)) {
+        $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$_POST['edit']."' ");
+        echo "<h2>Update Timetable Details</h2>";
+        railtimetable_edit_timetable($_POST['edit'], $tt->timetable, $tt->background, $tt->colour, $tt->totaltrains, $tt->html, "Update Timetable" );
+        return;
+    }
+
+    if (array_key_exists('del', $_POST)) {
+        $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$_POST['del']."' ");
+        if (array_key_exists('confirm', $_POST)) {
+            $wpdb->delete($wpdb->prefix."railtimetable_timetables", array('id' => $_POST['del']));
+            $wpdb->delete($wpdb->prefix."railtimetable_times", array('timetableid' => $_POST['del']));
+            $wpdb->delete($wpdb->prefix."railtimetable_dates", array('timetableid' => $_POST['del']));
+            ?>
+            <h2>"<?php echo $tt->timetable; ?>" Deleted.</h2>
+            <?php
+        } else {
+            ?>
+            <form method='post' action=''>
+                <h2>Are you sure you want to delete the "<?php echo $tt->timetable; ?>" timetable ?</h2>
+                <input type='hidden' name='confirm' value='1' />
+                <input type='hidden' name='del' value='<?php echo $tt->id; ?>' />
+                <input type='submit' value='Delete Event' />
+            </form>
+            <?php
+            return;
+        }
+    }
     ?>
     <h1>Heritage Railway Timetable - Edit Timetables</h1>
+    <form method='post' action=''>
+    <table><tr><th>Timetable</th><th>Actions</th><tr>
     <?php
+    $timetables = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_timetables ORDER BY totaltrains ASC");
+    $count = count($timetables);
+    for ($loop = 0; $loop < $count; $loop++) {
+        ?>
+        <tr>
+            <th style='text-transform:capitalize;color:#<?php echo $timetables[$loop]->colour;?>;background:#<?php echo $timetables[$loop]->background;?>;'>
+                <?php echo $timetables[$loop]->timetable; ?></th>
+            <td>
+                <button type='hidden' name='edit' value='<?php echo $timetables[$loop]->id; ?>'>Edit Details</button>
+                <button type='hidden' name='edittimes' value='<?php echo $timetables[$loop]->id; ?>'>Edit Times</button>
+                <button type='hidden' name='del' value='<?php echo $timetables[$loop]->id; ?>'>Delete</button>
+            </td>
+        </tr>
+        <?php
+    }
+    ?>
+    </table>
+    </form>
+    <h2>Add New Timetable</h2>
+    <?php
+    railtimetable_edit_timetable();
+}
+
+function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $colour = "", $totaltrains = 1, $notes = "", $button="Add Timetable") {
+    ?>
+    <form method='post' action=''>
+        <input type='hidden' name='action' value='edittimetable' />
+        <input type='hidden' name='id' value='<?php echo htmlspecialchars($id); ?>' /> 
+        <table><tr>
+            <td>Timetable</td>
+            <td><input type='text' name='timetable' size='12' value='<?php echo htmlspecialchars($timetable, ENT_QUOTES); ?>' /></td>
+        </tr><tr>
+            <td>Total Trips</td>
+            <td><select name='totaltrains'><?php
+                for ($loop=1; $loop<25; $loop++) {
+                    if ($totaltrains == $loop) {
+                        $s = " selected='selected' ";
+                    } else {
+                        $s = "";
+                    }
+                    echo "<option value='".$loop."'".$s.">".$loop."</option>";
+                }
+            ?></select></td> 
+        </tr><tr>
+            <td>Notes</td>
+            <td><textarea name='html' cols='80' rows='3'><?php echo htmlspecialchars($notes, ENT_QUOTES); ?></textarea></td>
+        </tr><tr>
+            <td>Background colour</td>
+            <td><input type='text' name='background' size='6' value='<?php echo htmlspecialchars($background); ?>' /></td>
+        </tr><tr>
+            <td>Text colour</td>
+            <td><input type='text' name='colour' size='6' value='<?php echo htmlspecialchars($colour); ?>' /></td>
+        </tr><tr>
+            <td></td>
+            <td><input type='submit' value='<?php echo $button; ?>' /></td>
+        </tr></table>
+    </form>
+    <?php
+}
+
+function railtimetable_updatetimetable() {
+    global $wpdb;
+
+    $params = array('timetable' => strtolower(stripslashes($_POST['timetable'])), 'html' => stripslashes($_POST['html']), 'background' => trim($_POST['background']), 'colour' => trim($_POST['colour']), 'totaltrains' => intval($_POST['totaltrains']));
+    if (intval($_POST['id']) > -1) {
+        $wpdb->update($wpdb->prefix.'railtimetable_timetables', $params,
+            array('id' => $_POST['id']));
+    } else {
+        $wpdb->insert($wpdb->prefix.'railtimetable_timetables', $params);
+    }
 }
 
 function railtimetable_edit_events() {
@@ -368,7 +478,7 @@ function railtimetable_showcalendaredit($year, $month) {
         $current = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_dates WHERE date = '".$year."-".$month."-".$day."'");
         if ($current) {
             $ct = reset($current);
-            $tt = $ct->timetable;
+            $tt = $ct->timetableid;
             echo "<option value='none'>None</option>";
         } else {
             $tt = "none";
@@ -376,12 +486,12 @@ function railtimetable_showcalendaredit($year, $month) {
         }
 
         for ($loop=0; $loop<count($timetables); $loop++) {
-            if ($tt == $timetables[$loop]->timetable) {
+            if ($tt == $timetables[$loop]->id) {
                 $s = " selected='selected' ";
             } else {
                 $s = "";
             }
-            echo "<option value='".$timetables[$loop]->timetable."'".$s.">".ucfirst($timetables[$loop]->timetable)."</option>";
+            echo "<option value='".$timetables[$loop]->id."'".$s.">".ucfirst($timetables[$loop]->timetable)."</option>";
         }
 
         echo "</select></td>\n";
@@ -440,13 +550,13 @@ function railtimetable_updatecalendar() {
                 $wpdb->delete($wpdb->prefix.'railtimetable_dates', array('id' => $rec->id));
             } else {
                 if ($newtt != $rec->timetable) {
-                    $wpdb->update($wpdb->prefix.'railtimetable_dates', array('timetable' => $newtt, 'date' => $year."-".$month."-".$day),  array('id' => $rec->id));
+                    $wpdb->update($wpdb->prefix.'railtimetable_dates', array('timetableid' => $newtt, 'date' => $year."-".$month."-".$day),  array('id' => $rec->id));
                 }
             }
         } else {
             // There is no record at the moment, if timetable isn't none, we need to add one in otherwise no action needed
             if ($newtt != "none") {
-                $wpdb->insert($wpdb->prefix.'railtimetable_dates', array('timetable' => $newtt, 'date' => $year."-".$month."-".$day));
+                $wpdb->insert($wpdb->prefix.'railtimetable_dates', array('timetableid' => $newtt, 'date' => $year."-".$month."-".$day));
             }
         }
 
