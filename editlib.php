@@ -139,6 +139,10 @@ function railtimetable_edit_timetables() {
         switch ($_POST['action']) {
             case 'edittimetable':
                 railtimetable_updatetimetable();
+                break;
+            case 'edittimes':
+                railtimetable_updatetimes();
+                break;
         }
     }
 
@@ -147,6 +151,12 @@ function railtimetable_edit_timetables() {
         $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$_POST['edit']."' ");
         echo "<h2>Update Timetable Details</h2>";
         railtimetable_edit_timetable($_POST['edit'], $tt->timetable, $tt->background, $tt->colour, $tt->totaltrains, $tt->html, "Update Timetable" );
+        return;
+    }
+
+    // Do we have any edit or delete actions?
+    if (array_key_exists('edittimes', $_POST)) {
+        railtimetable_edit_times($_POST['edittimes']);
         return;
     }
 
@@ -197,6 +207,132 @@ function railtimetable_edit_timetables() {
     <h2>Add New Timetable</h2>
     <?php
     railtimetable_edit_timetable();
+}
+
+function railtimetable_edit_times($id) {
+    global $wpdb;
+
+    $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$id."' ");
+
+    echo "<h2>Update Timetable Times: <span style='text-transform:capitalize'>".$tt->timetable."</span></h2>".
+        "<form method='post' action=''>\n".
+        "<input type='hidden' name='action' value='edittimes' />".
+        "<input type='hidden' name='id' value='".$id."' />";
+
+    $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
+    $numstations = count($stations);
+    if ($tt->colsmeta == false) {
+        $tt->colsmeta = "";
+    }
+    railtimetable_edit_times_single($id, $stations, $numstations, "down", $tt->totaltrains, $tt->colsmeta);
+    echo "<br/><br/><br/>\n";
+    railtimetable_edit_times_single($id, $stations, $numstations, "up", $tt->totaltrains);
+    echo "<input type='submit' value='Update Times' />".
+        "</form>\n";
+}
+
+function railtimetable_edit_times_single($id, $stations, $numstations, $direction, $totaltrains, $colsmeta=false) {
+    global $wpdb;
+    echo "<table>\n";
+
+    if ($direction == "up") {
+        $startid = $numstations-1;
+        $endid = 0;
+        $inc = -1;
+    } else {
+        $startid = 0;
+        $endid = $numstations-1;
+        $inc = 1;
+    }
+
+    if ($colsmeta !== false) {
+        echo "<tr><td>Notes</td><td></td>\n";
+        railtimetable_edit_times_line($totaltrains, $colsmeta, 'notes_');
+        echo "</tr>\n";
+    }
+
+    for ($loop = $startid; $loop>-1 && $loop<$numstations; $loop=$loop+$inc) {
+        $station = $stations[$loop];
+        $times = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_times WHERE timetableid='".$id."' AND station='".$station->sequence."'");
+        if (!$times) {
+            $times = new stdclass();
+            $times->down_deps="";
+            $times->down_arrs="";
+            $times->up_deps="";
+            $times->up_arrs="";
+        }
+
+        if ($station->sequence != $startid) {
+            echo "<tr><th>".$station->name."</th><td>arr</td>\n";
+            $key = $direction."_arrs";
+            railtimetable_edit_times_line($totaltrains, $times->$key, $key."_".$station->sequence."_");
+        }
+
+        if ($station->sequence != $endid) {
+            echo "<tr><th>".$station->name."</th><td>dep</td>\n";
+            $key = $direction."_deps";
+            railtimetable_edit_times_line($totaltrains, $times->$key, $key."_".$station->sequence."_");
+        }
+    }
+    echo "</table>\n";
+}
+
+function railtimetable_edit_times_line($totaltrains, $line, $key) {
+    $cols = explode(',',$line);
+    for ($loop = 0; $loop < $totaltrains; $loop++) {
+        if (array_key_exists($loop, $cols)) {
+            echo "<td><input type='text' name='".$key.$loop."' value='".htmlentities($cols[$loop], ENT_QUOTES)."' size='6' /></td>\n";
+        } else {
+            echo "<td><input type='text' name='".$key.$loop."' value='' size='6' /></td>\n";
+        }
+    }
+}
+
+function railtimetable_updatetimes() {
+    global $wpdb;
+    $id = intval($_POST['id']);
+    $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$id."' ");
+    $notes = railtimetable_get_updatetimes("notes_", $tt->totaltrains, false);
+    $wpdb->update($wpdb->prefix.'railtimetable_timetables', array('colsmeta' => $notes), array('id' => $id));
+
+    $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
+    //$numstations = count($stations);
+    //$timetables = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_times WHERE timetableid='".$id."'");
+    foreach ($stations as $station) {
+        $down_deps = railtimetable_get_updatetimes('down_deps_'.$station->sequence.'_', $tt->totaltrains);
+        $down_arrs = railtimetable_get_updatetimes('down_arrs_'.$station->sequence.'_', $tt->totaltrains);
+        $up_deps = railtimetable_get_updatetimes('up_deps_'.$station->sequence.'_', $tt->totaltrains);
+        $up_arrs = railtimetable_get_updatetimes('up_arrs_'.$station->sequence.'_', $tt->totaltrains);
+
+        $timesrow = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}railtimetable_times WHERE station=".$station->sequence." AND timetableid=".$tt->id);
+        if ($timesrow) {
+            $wpdb->update($wpdb->prefix.'railtimetable_times',
+                array('down_deps' => $down_deps, 'down_arrs' => $down_arrs, 'up_deps' => $up_deps, 'up_arrs' => $up_arrs),
+                array('id' => $timesrow));
+        } else {
+            $wpdb->insert($wpdb->prefix.'railtimetable_times',
+                array('station' => $station->sequence, 'timetableid' => $tt->id, 'down_deps' => $down_deps, 'down_arrs' => $down_arrs, 'up_deps' => $up_deps, 'up_arrs' => $up_arrs));
+        }
+    }
+}
+
+function railtimetable_get_updatetimes($key, $totaltrains) {
+    $allempty = true;
+    $strs = array();
+    for ($loop=0; $loop < $totaltrains; $loop++) {
+        $strs[$loop] = trim(stripslashes($_POST[$key.$loop]));
+        if (strlen($strs[$loop]) > 0) {
+            $allempty = false;
+        }
+    }
+
+    if ($allempty) {
+        $data = '';
+    } else {
+        $data = implode(',',$strs);
+    }
+
+    return $data;
 }
 
 function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $colour = "", $totaltrains = 1, $notes = "", $button="Add Timetable") {
