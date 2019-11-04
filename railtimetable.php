@@ -207,40 +207,59 @@ function railtimetable_today($attr) {
     $datetime = new DateTime('tomorrow');
     $tomorrow = $datetime->format('Y-m-d');
 
-    // If it's after 16:00 then visitors probably want tomorrows train times.
-    if (date('H') > 16) {
+    // If it's after 17:00 then visitors probably want tomorrows train times.
+    if (date('H') > 17) {
         $now = $tomorrow;
     }
 
+    $nextdate = false;
     foreach ($stations as $index=>$station) {
         $results = railtimetable_timesforstation($station, "name", $now, ">=");
+        if ($results) {
+            $times[$index] = $results[0];
+        }
+        $nextdate = $results[0]->date;
+    }
 
-        if (!$results) {
-            /** There are no trains, but some special events may not have a timetable allocated, so check for that... **/
-            $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE {$wpdb->prefix}railtimetable_eventdays.date = '".$now."'", OBJECT );
-
-            if (!$found_events) {
-                if ($now == $tomorrow) {
-                    return "<h4 style='text-align:center;margin-bottom:10px;'>".__("No trains tomorrow")."</h4>";
-                } else {
-                    return "<h4 style='text-align:center;margin-bottom:10px;'>".__("No trains today")."</h4>";
-                }
-            }
-            $linkfield = railtimetable_currentlangcode();
-
-            for ($loop = 0; $loop < count($found_events); $loop++) {
-                $links = json_decode($found_events[$loop]->link);
-                $html = "<a style='font-weight:bold;' class='timetable-special-front' href='".$links->$linkfield."'>".__($found_events[$loop]->title)."</a><p>".__($found_events[$loop]->description)."</p>";
-            }
-
-            if ($now == $tomorrow) {
-                return "<h4 style='text-align:center;margin-bottom:10px;'>".__("Tomorrow's Trains")."</h4>".$html;
-            } else {
-                return "<h4 style='text-align:center;margin-bottom:10px;'>".__("Today's Trains")."</h4>".$html;
-            }
+    // 
+    if ($nextdate != $now) {
+        if ($nextdate) {
+            $extra = " AND {$wpdb->prefix}railtimetable_eventdays.date < '".$nextdate."'";
+        } else {
+            $extra = "";
         }
 
-        $times[$index] = $results[0];
+        $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE {$wpdb->prefix}railtimetable_eventdays.date >= '".$now."'".$extra." ORDER BY {$wpdb->prefix}railtimetable_eventdays.date ASC LIMIT 1", OBJECT );
+
+        if ($found_events) {
+            $linkfield = railtimetable_currentlangcode();
+
+            $firstdate = false;
+            for ($loop = 0; $loop < count($found_events); $loop++) {
+                $links = json_decode($found_events[$loop]->link);
+                $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
+                $date = strftime("%e-%b-%Y", $evtdate->getTimestamp());
+                $html .= "<a class='timetable-special-front-head' href='".$links->$linkfield."'>".__($found_events[$loop]->title)." - ".$date."</a><p>".__($found_events[$loop]->description)."</p>";
+            }
+
+            if ($now == $tomorrow && $found_events[0]->date == $tomorrow) {
+                return "<h4 style='text-align:center;margin-bottom:10px;'>".__("Tomorrow's Trains")."</h4>".$html;
+            } 
+            elseif ($times[0]->date == $now) {
+                return "<h4 style='text-align:center;margin-bottom:10px;'>".__("Today's Trains")."</h4>".$html;
+            } else {
+                return "<h4 style='text-align:center;margin-bottom:10px;'>".__("Next Trains")."</h4>".$html;
+            }
+        }
+    }
+
+    // If we have gotten this far with no times and no events there are no trains to show. 
+    if (count($results) == 0) {
+        if ($now == $tomorrow) {
+            return "<h4 style='text-align:center;margin-bottom:10px;'>".__("No trains tomorrow")."</h4>";
+        } else {
+            return "<h4 style='text-align:center;margin-bottom:10px;'>".__("No trains today")."</h4>";
+        }
     }
 
     $nextd = new DateTime($times[0]->date);
@@ -342,7 +361,7 @@ function railtimetable_events($attr) {
             }
             $date = implode(', ', $dates);
 
-            $extra .= "<tr><td><a style='font-weight:bold;' class='timetable-special-front' href='".$links->$linkfield."'> ".pll__($found_events[$loop]->title)."</a></td><td>".$date."</td></tr>";
+            $extra .= "<tr><td><a class='timetable-special-front' href='".$links->$linkfield."'> ".pll__($found_events[$loop]->title)."</a></td><td>".$date."</td></tr>";
             $linecount ++;
 
             // If we have two events with the same ID at the end, we'll get a duplicate without this check.
@@ -387,7 +406,7 @@ function railtimetable_events_full($attr) {
                 }
             }
             $date = implode(', ', $dates);
-            $extra .= "<tr><td><a style='font-weight:bold;' class='timetable-special-front' href='".$links->$linkfield."'> ".pll__($found_events[$loop]->title)."</a></td><td>".$date."</td></tr>";
+            $extra .= "<tr><td><a class='timetable-special-front' href='".$links->$linkfield."'> ".pll__($found_events[$loop]->title)."</a></td><td>".$date."</td></tr>";
 
             // If we have two events with the same ID at the end, we'll get a duplicate without this check.
             if ($iloop == count($found_events)) {
