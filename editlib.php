@@ -397,9 +397,10 @@ function railtimetable_edit_events() {
 
             $linksjson = json_encode($links);
             $params = array('title' => stripslashes($_POST['title']), 'description' => stripslashes($_POST['desc']), 'link' => $linksjson, 'background' => trim($_POST['background']), 'colour' => trim($_POST['colour']));
-            if (intval($id) > -1) {
+            $id = intval($_POST['id']);
+            if ($id > -1) {
                 $wpdb->update($wpdb->prefix.'railtimetable_eventdetails', $params,
-                    array('id' => $_POST['id']));
+                    array('id' => $id));
             } else {
                 $wpdb->insert($wpdb->prefix.'railtimetable_eventdetails', $params);
             }
