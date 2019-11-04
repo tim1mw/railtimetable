@@ -378,13 +378,19 @@ function railtimetable_events($attr) {
 function railtimetable_events_full($attr) {
     global $wpdb;
     railtimetable_setlangage();
-    if (is_array($attr) && array_key_exists('year', $attr)) {
-        $year = $attr['year'];
+    if (is_array($attr) && array_key_exists('start', $attr)) {
+        $start = $attr['start'];
     } else {
-        $year = date("Y");
+        $start = date("Y")."-01-01";
     }
 
-    $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE date >= '".$year."-01-01' AND date <= '".$year."-12-31' ORDER BY event,date ASC");
+    if (is_array($attr) && array_key_exists('end', $attr)) {
+        $end = $attr['end'];
+    } else {
+        $end = date("Y")."-12-31";
+    }
+
+    $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE date >= '".$start."' AND date <= '".$end."' ORDER BY date,event ASC");
 
     $extra = "";
     if ($found_events) {
