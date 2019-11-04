@@ -68,12 +68,9 @@
     border:1px solid red;
 }
 
-.calendar-special a {
+.calendar-special{
     font-weight:bold;
-    border: 2px solid red;
-    line-height:0.8;
-    padding-left:2px;
-    padding-right:2px;
+    text-decoration: underline;
 }
 
 .timetable-header {
