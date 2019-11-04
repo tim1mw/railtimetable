@@ -111,8 +111,11 @@ class Calendar
                 $class .= " calendar-special ";
                 for ($loop=0; $loop< count($specials); $loop++) {
                     $event_summary .= railtimetable_trans($specials[$loop]->title);
+                    if (strlen($specials[$loop]->background) > 0) {
+                        $style .= "background:#".$specials[$loop]->background.";";
+                    }
                     if (strlen($specials[$loop]->background) > 0 || strlen($specials[$loop]->colour) > 0) {
-                        $style .= "background:#".$specials[$loop]->background.";color:#".$specials[$loop]->colour.";";
+                        $style .= "color:#".$specials[$loop]->colour.";";
                     }
                     if ($loop < count($specials)-1) {
                         $event_summary .= " & ";
