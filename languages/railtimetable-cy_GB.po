@@ -15,11 +15,11 @@ msgid "Today's Trains"
 msgstr "Trenau Heddiw"
 
 #
-msgid "Tomorrows's Trains"
+msgid "Tomorrow's Trains"
 msgstr "Trenau Yfory"
 
 #
-msgid "Next trains on"
+msgid "Next Trains"
 msgstr "Trenau nesaf ar"
 
 #
@@ -29,3 +29,15 @@ msgstr "Amserlen ar gyfer"
 #
 msgid "Special Event"
 msgstr "Digwyddiadau Arbennig"
+
+#
+msgid "No trains tomorrow"
+msgstr "Dim Trenau Yfory"
+
+#
+msgid "No trains today"
+msgstr "Dim Trenau Heddiw"
+
+#
+msgid "Close"
+msgstr "Caewch"
