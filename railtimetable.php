@@ -282,14 +282,14 @@ function railtimetable_today($attr) {
 
 function railtimetable_smalltimetable($times, $heading, $extra = "") {
     railtimetable_setlangage();
-    $html = "<h4 style='text-align:center;margin-bottom:10px;'>".$heading."</h4>";
+    $html = "<h4 class='timetable-smallheading'>".$heading."</h4>";
     $html .= $extra;
-    $style = "style='vertical-align:top;padding:2px;background:#".$times[0]->background.";color:#".$times[0]->colour.";'";
-    $html.="<table class='next-trains' ".$style."><tr><td ".$style.">".
-        __("Timetable", "railtimetable")."</td><td ".$style.">".railtimetable_trans($times[0]->timetable, $lang)."</td></tr>";
+    $style = "style='background:#".$times[0]->background.";color:#".$times[0]->colour.";'";
+    $html.="<table class='next-trains' ".$style."><tr><td class='next-trains-cell' ".$style.">".
+        __("Timetable", "railtimetable")."</td><td class='next-trains-cell' ".$style.">".railtimetable_trans($times[0]->timetable, $lang)."</td></tr>";
 
     foreach ($times as $time) {
-        $html .= "<tr><td ".$style.">".$time->name."</td><td ".$style.">";
+        $html .= "<tr><td class='next-trains-cell' ".$style.">".$time->name."</td><td class='next-trains-cell' ".$style.">";
         if (strlen($time->up_deps) > 0) {
             $html.= str_replace(",", ", ", $time->up_deps);
         } else {
@@ -299,7 +299,7 @@ function railtimetable_smalltimetable($times, $heading, $extra = "") {
     }
     $html .= "</table>";
     if (strlen($times[0]->html) > 0) {
-        $html .= "<p style='margin-top:0px;padding-top:0px;text-align:right;font-size:small;'>".$times[0]->html."</p>";
+        $html .= "<p class='timetable-smallnotes'>".$times[0]->html."</p>";
     }
     return $html;
 }

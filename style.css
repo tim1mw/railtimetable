@@ -88,6 +88,11 @@
     font-weight:bold;
 }
 
+.next-trains-cell {
+    vertical-align:top;
+    padding:2px !important;
+}
+
 .timetable-wrapper {
     overflow: auto;
 }
@@ -163,4 +168,15 @@
 .timetable-special-front-head {
     font-weight:bold;
     font-size:large;
+}
+
+.timetable-smallnotes {
+    margin-top:0px;
+    padding-top:0px;
+    font-size:small;
+}
+
+.timetable-smallheading {
+    text-align:center;
+    margin-bottom:10px;
 }
