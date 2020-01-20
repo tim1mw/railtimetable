@@ -530,10 +530,6 @@ function railtimetable_popup() {
         $last = railtimetable_timesforstation($numstations - 1, "sequence", $date->format('Y-m-d'), "=");
         echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime("%e-%b-%Y", $date->getTimestamp()), $extra);
 
-        if (strlen($first[0]->html) > 0) {
-            echo railtimetable_trans($first[0]->html);
-        }
-
         exit();
    };
 
