@@ -23,7 +23,7 @@ function railtimetable_currentlang() {
         return "/".pll_current_language();
     }
 
-    return "";
+    return railtimetable_default_locale();
 }
 
 function railtimetable_currentlangfield() {
@@ -31,7 +31,7 @@ function railtimetable_currentlangfield() {
         return "link_".pll_current_language();
     }
 
-    return "";
+    return railtimetable_default_locale();
 }
 
 function railtimetable_currentlangcode() {
@@ -39,7 +39,7 @@ function railtimetable_currentlangcode() {
         return pll_current_language();
     }
 
-    return "none";
+    return railtimetable_default_locale();
 }
 
 function railtimetable_alllangcode() {
@@ -47,7 +47,11 @@ function railtimetable_alllangcode() {
         return pll_languages_list('locale');
     }
 
-    return array('default' => '');;
+    return array(0 => railtimetable_default_locale());;
+}
+
+function railtimetable_default_locale() {
+    return explode('_', get_locale())[0];
 }
 
 
