@@ -242,7 +242,7 @@ function railtimetable_today($attr) {
             for ($loop = 0; $loop < count($found_events); $loop++) {
                 $links = json_decode($found_events[$loop]->link);
                 $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
-                $date = strftime("%e-%b-%Y", $evtdate->getTimestamp());
+                $date = strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp());
                 $html .= "<a class='timetable-special-front-head' href='".$links->$linkfield."'>".railtimetable_trans($found_events[$loop]->title)." - ".$date."</a><p>".railtimetable_trans($found_events[$loop]->description)."</p>";
             }
 
@@ -267,7 +267,7 @@ function railtimetable_today($attr) {
     }
 
     $nextd = new DateTime($times[0]->date);
-    $nextds = strftime("%e-%b-%Y", $nextd->getTimestamp());
+    $nextds = strftime(get_option('railtimetable_date_format'), $nextd->getTimestamp());
 
     if ($now == $tomorrow && $times[0]->date == $tomorrow) {
         $heading .= __("Tomorrow's Trains", "railtimetable");
@@ -349,7 +349,7 @@ function railtimetable_events($attr) {
         $extra .= "<table>";
         for ($loop=0; $loop<count($found_events) && $linecount<$attr['number']; $loop++) {
             $start = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
-            $dates = array(strftime("%e-%b-%Y", $start->getTimestamp()));
+            $dates = array(strftime(get_option('railtimetable_date_format'), $start->getTimestamp()));
 
             $linkfield = railtimetable_currentlangcode();
             $links = json_decode($found_events[$loop]->link);
@@ -360,7 +360,7 @@ function railtimetable_events($attr) {
                     break;
                 } else {
                     $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$iloop]->date);
-                    $dates[] = strftime("%e-%b-%Y", $evtdate->getTimestamp());
+                    $dates[] = strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp());
                 }
             }
             $date = implode(', ', $dates);
@@ -401,7 +401,7 @@ function railtimetable_events_full($attr) {
         $extra .= "<table>";
         for ($loop=0; $loop<count($found_events); $loop++) {
             $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
-            $dates = array(strftime("%e-%b-%Y", $evtdate->getTimestamp()));
+            $dates = array(strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp()));
 
             $linkfield = railtimetable_currentlangcode();
             $links = json_decode($found_events[$loop]->link);
@@ -412,7 +412,7 @@ function railtimetable_events_full($attr) {
                     break;
                 } else {
                     $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$iloop]->date);
-                    $dates[] = strftime("%e-%b-%Y", $evtdate->getTimestamp());
+                    $dates[] = strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp());
                 }
             }
             $date = implode(', ', $dates);
@@ -528,7 +528,7 @@ function railtimetable_popup() {
 
         $first = railtimetable_timesforstation(0, "sequence", $date->format('Y-m-d'), "=");
         $last = railtimetable_timesforstation($numstations - 1, "sequence", $date->format('Y-m-d'), "=");
-        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime("%e-%b-%Y", $date->getTimestamp()), $extra);
+        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime(get_option('railtimetable_date_format'), $date->getTimestamp()), $extra);
 
         exit();
    };

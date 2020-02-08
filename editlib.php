@@ -3,10 +3,11 @@
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
 // Hook for adding admin menus
-add_action('admin_menu', 'mt_add_pages');
+add_action('admin_menu', 'railtimetable_add_pages');
+add_action( 'admin_init', 'railtimetable_register_settings' );
 
 // action function for above hook
-function mt_add_pages() {
+function railtimetable_add_pages() {
     // Add a new top-level menu (ill-advised):
     add_menu_page(__('Rail Timetable','railtimetable'), __('Rail Timetable','railtimetable'), 'manage_options', 'railtimetable-top-level-handle', 'railtimetable_edit' );
 
@@ -19,11 +20,25 @@ function mt_add_pages() {
     add_submenu_page('railtimetable-top-level-handle', __('Edit Calendar','railtimetable'), __('Edit Calendar','railtimetable'), 'manage_options', 'railtimetable-edit-calendar', 'railtimetable_edit_calendar');
 }
 
+function railtimetable_register_settings() {
+   add_option( 'railtimetable_date_format', 'Y-m-d');
+   register_setting( 'railtimetable_options_main', 'railtimetable_date_format'); 
+}
+
 function railtimetable_edit() {
     global $wpdb;
     ?>
     <h1>Heritage Railway Timetable</h1>
-    <p>Show some kind of summary here....</p>
+    <form method="post" action="options.php">
+    <?php settings_fields('railtimetable_options_main'); ?>
+    <table>
+        <tr valign="top">
+            <th scope="row"><label for="railtimetable_date_format">Display Date format</label></th>
+            <td><input type="text" id="railtimetable_date_format" name="railtimetable_date_format" value="<?php echo get_option('railtimetable_date_format'); ?>" /> Use <a href='https://www.php.net/manual/en/function.strftime' target='_blank'>PHP strftime formatting parameters</a> here</td>
+        </tr>
+    </table>
+    <?php submit_button(); ?>
+    </form>
 
     <?php
     if (array_key_exists('action', $_POST)) {
