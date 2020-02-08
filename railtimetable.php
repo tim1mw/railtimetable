@@ -284,7 +284,7 @@ function railtimetable_today($attr) {
     return $html;
 }
 
-function railtimetable_smalltimetable($times, $heading, $extra = "") {
+function railtimetable_smalltimetable($times, $heading, $extra = "", $buylink = false) {
     railtimetable_setlangage();
     $html = "<h4 class='timetable-smallheading'>".$heading."</h4>";
     $html .= $extra;
@@ -302,6 +302,11 @@ function railtimetable_smalltimetable($times, $heading, $extra = "") {
         $html .= "</td></tr>";
     }
     $html .= "</table>";
+
+    if ($buylink) {
+        $html .= "<div class='timetable-buytickets-wrapper'>".$buylink."</div>";
+    }
+
     if (strlen($times[0]->html) > 0) {
         $html .= "<p class='timetable-smallnotes'>".$times[0]->html."</p>";
     }
@@ -316,6 +321,7 @@ function railtimetable_timesforstation($station, $stationfield, $date, $datesele
         "wp_railtimetable_timetables.background, ".
         "wp_railtimetable_timetables.colour, ".
         "wp_railtimetable_timetables.html, ".
+        "wp_railtimetable_timetables.buylink, ".
         "wp_railtimetable_times.up_deps, ".
         "wp_railtimetable_times.down_deps, ".
         "wp_railtimetable_stations.name ".
@@ -429,6 +435,23 @@ function railtimetable_events_full($attr) {
     return $extra;
 }
 
+function railtimetable_events_buy($attrs) {
+    global $wpdb;
+    railtimetable_setlangage();
+
+    $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE {$wpdb->prefix}railtimetable_eventdetails.id = ".$attrs['id']." ORDER BY date ASC");
+
+    $html = "<div class='timetable-buytickets-list'>";
+    foreach ($found_events as $event) {
+        $evtdate = Datetime::createFromFormat('Y-m-d', $event->date);
+        $date = strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp());
+        $html .= "<span class='timetable-buytickets-list-span'>".get_buylink($event->buylink, $evtdate->getTimestamp(), $date, '')."</span> ";
+    }
+    $html .= "</div>";
+
+    return $html;
+}
+
 function railtimetable_script()
 {
     wp_enqueue_script('jquery');
@@ -511,6 +534,7 @@ function railtimetable_popup() {
 
         $extra = "";
         $linkfield = railtimetable_currentlangcode();
+        $buylink = false;
         if ($found_events) {
             $extra .= "<div style='margin-top:1em;margin-bottom:1em;'><h5>".__("Special Event", "railtimetable").": ";
             for ($loop=0; $loop<count($found_events); $loop++) {
@@ -519,20 +543,44 @@ function railtimetable_popup() {
                 if ($loop < count($found_events)-1) {
                     $extra .= " & ";
                 }
+                if (strlen($found_events[$loop]->buylink) > 0 && !$buylink) {
+                    $buylink = get_buylink($found_events[$loop]->buylink, $date->getTimestamp());
+                }
             }
             $extra .= "</h5></div>";
         }
 
         // Get the first station
         $numstations = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
-
         $first = railtimetable_timesforstation(0, "sequence", $date->format('Y-m-d'), "=");
         $last = railtimetable_timesforstation($numstations - 1, "sequence", $date->format('Y-m-d'), "=");
-        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime(get_option('railtimetable_date_format'), $date->getTimestamp()), $extra);
+        if (!$buylink) {
+            if (strlen($first[0]->buylink) >0) {
+                $buylink = get_buylink($first[0]->buylink, $date->getTimestamp());
+            }
+        }
+
+        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime(get_option('railtimetable_date_format'), $date->getTimestamp()), $extra, $buylink);
 
         exit();
    };
 
+}
+
+function get_buylink($buylink, $datestamp, $text = false, $class = 'timetable-buytickets') {
+    if (!$text) {
+        $text = __("Buy Tickets", "railtimetable");
+    }
+
+    preg_match('/\[[^]]+\]/', $buylink, $matches);
+
+    if (count($matches) > 0) {
+        $fmt = substr($matches[0], 1, -1);
+        $time = trim(strftime($fmt, $datestamp));
+        $buylink = preg_replace('/\[[^]]+\]/', $time, $buylink);
+    }
+
+    return "<a class='".$class."' href='".$buylink."'>".$text."</a>";
 }
 
 
@@ -542,6 +590,7 @@ add_shortcode('railtimetable_times_all', 'railtimetable_times_all');
 add_shortcode('railtimetable_today', 'railtimetable_today');
 add_shortcode('railtimetable_events', 'railtimetable_events');
 add_shortcode('railtimetable_events_full', 'railtimetable_events_full');
+add_shortcode('railtimetable_events_buy', 'railtimetable_events_buy');
 
 add_action( 'init', 'railtimetable_load_textdomain' );
 add_action( 'wp_enqueue_scripts', 'railtimetable_script' );

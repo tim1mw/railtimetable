@@ -165,7 +165,7 @@ function railtimetable_edit_timetables() {
     if (array_key_exists('edit', $_POST)) {
         $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$_POST['edit']."' ");
         echo "<h2>Update Timetable Details</h2>";
-        railtimetable_edit_timetable($_POST['edit'], $tt->timetable, $tt->background, $tt->colour, $tt->totaltrains, $tt->html, "Update Timetable" );
+        railtimetable_edit_timetable($_POST['edit'], $tt->timetable, $tt->background, $tt->colour, $tt->totaltrains, $tt->html, $tt->buylink, "Update Timetable" );
         return;
     }
 
@@ -350,7 +350,7 @@ function railtimetable_get_updatetimes($key, $totaltrains) {
     return $data;
 }
 
-function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $colour = "", $totaltrains = 1, $notes = "", $button="Add Timetable") {
+function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $colour = "", $totaltrains = 1, $notes = "", $buylink="", $button="Add Timetable") {
     ?>
     <form method='post' action=''>
         <input type='hidden' name='action' value='edittimetable' />
@@ -380,6 +380,11 @@ function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $c
             <td>Text colour</td>
             <td><input type='text' name='colour' size='6' value='<?php echo htmlspecialchars($colour); ?>' /></td>
         </tr><tr>
+            <td>Buy link</td>
+            <td><input type='text' name='buylink' size='80' value='<?php echo htmlspecialchars($buylink); ?>' /></td>
+        </tr><tr>
+            <td></td><td>Use <a href='https://www.php.net/manual/en/function.strftime' target='_blank'>PHP strftime formatting parameters</a> here to insert a date</td>
+        </tr><tr>
             <td></td>
             <td><input type='submit' value='<?php echo $button; ?>' /></td>
         </tr></table>
@@ -390,7 +395,7 @@ function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $c
 function railtimetable_updatetimetable() {
     global $wpdb;
 
-    $params = array('timetable' => strtolower(stripslashes($_POST['timetable'])), 'html' => stripslashes($_POST['html']), 'background' => trim($_POST['background']), 'colour' => trim($_POST['colour']), 'totaltrains' => intval($_POST['totaltrains']));
+    $params = array('timetable' => strtolower(stripslashes($_POST['timetable'])), 'html' => stripslashes($_POST['html']), 'background' => trim($_POST['background']), 'colour' => trim($_POST['colour']), 'totaltrains' => intval($_POST['totaltrains']), 'buylink' => trim($_POST['buylink']));
     if (intval($_POST['id']) > -1) {
         $wpdb->update($wpdb->prefix.'railtimetable_timetables', $params,
             array('id' => $_POST['id']));
@@ -411,7 +416,7 @@ function railtimetable_edit_events() {
             }
 
             $linksjson = json_encode($links);
-            $params = array('title' => stripslashes($_POST['title']), 'description' => stripslashes($_POST['desc']), 'link' => $linksjson, 'background' => trim($_POST['background']), 'colour' => trim($_POST['colour']));
+            $params = array('title' => stripslashes($_POST['title']), 'description' => stripslashes($_POST['desc']), 'link' => $linksjson, 'background' => trim($_POST['background']), 'colour' => trim($_POST['colour']), 'buylink' => trim($_POST['buylink']));
             $id = intval($_POST['id']);
             if ($id > -1) {
                 $wpdb->update($wpdb->prefix.'railtimetable_eventdetails', $params,
@@ -426,7 +431,7 @@ function railtimetable_edit_events() {
     if (array_key_exists('edit', $_POST)) {
         $evt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails WHERE id='".$_POST['edit']."' ");
         echo "<h2>Update Event</h2>";
-        railtimetable_edit_event($_POST['edit'], $evt->title, $evt->description, $evt->link, $evt->background, $evt->colour, $button="Update Event");
+        railtimetable_edit_event($_POST['edit'], $evt->title, $evt->description, $evt->link, $evt->background, $evt->colour, $evt->buylink, $button="Update Event");
         return;
     }
 
@@ -455,6 +460,7 @@ function railtimetable_edit_events() {
     <h1>Heritage Railway Timetable - Edit Events</h1>
     <form method='post' action=''>
     <table><tr>
+        <th>ID</th>
         <th>Event Name</th>
         <th>Actions</th>
     </tr>
@@ -463,6 +469,7 @@ function railtimetable_edit_events() {
     for ($loop = 0; $loop < count($events); $loop++) {
         ?>
         <tr>
+            <td><?php echo $events[$loop]->id; ?></td>
             <td><?php echo $events[$loop]->title; ?></td>
             <td>
                 <button type='hidden' name='edit' value='<?php echo $events[$loop]->id; ?>'>Edit</button>
@@ -481,7 +488,7 @@ function railtimetable_edit_events() {
     railtimetable_edit_event();
 }
 
-function railtimetable_edit_event($id=-1, $title="", $desc="", $linkjson="", $bg ="", $colour = "", $button="Add Event") {
+function railtimetable_edit_event($id=-1, $title="", $desc="", $linkjson="", $bg ="", $colour = "", $buylink = "", $button="Add Event") {
     ?>
     <form method='post' action=''>
         <input type='hidden' name='action' value='editevent' />
@@ -515,6 +522,11 @@ function railtimetable_edit_event($id=-1, $title="", $desc="", $linkjson="", $bg
         </tr><tr>
             <td>Text colour</td>
             <td><input type='text' name='colour' size='6' value='<?php echo htmlspecialchars($colour); ?>' /></td>
+        </tr><tr>
+            <td>Buy link</td>
+            <td><input type='text' name='buylink' size='80' value='<?php echo htmlspecialchars($buylink); ?>' /></td>
+        </tr><tr>
+            <td></td><td>Use <a href='https://www.php.net/manual/en/function.strftime' target='_blank'>PHP strftime formatting parameters</a> here to insert a date</td>
         </tr><tr>
             <td></td>
             <td><input type='submit' value='<?php echo $button; ?>' /></td>
