@@ -536,7 +536,7 @@ function railtimetable_popup() {
         $linkfield = railtimetable_currentlangcode();
         $buylink = false;
         if ($found_events) {
-            $extra .= "<div style='margin-top:1em;margin-bottom:1em;'><h5>".__("Special Event", "railtimetable").": ";
+            $extra .= "<div class='timetable-popupevent'><h5>".__("Special Event", "railtimetable").":<br />";
             for ($loop=0; $loop<count($found_events); $loop++) {
                 $links = json_decode($found_events[$loop]->link);
                 $extra .= "<a href='".$links->$linkfield."'>".railtimetable_trans($found_events[$loop]->title)."</a>";
@@ -560,7 +560,7 @@ function railtimetable_popup() {
             }
         }
 
-        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime(get_option('railtimetable_date_format'), $date->getTimestamp()), $extra, $buylink);
+        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")."<br />". strftime(get_option('railtimetable_date_format'), $date->getTimestamp()), $extra, $buylink);
 
         exit();
    };

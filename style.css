@@ -201,3 +201,9 @@
     border: 1px dotted black;
     white-space: nowrap;
 }
+
+.timetable-popupevent {
+   margin-top:1em;
+   margin-bottom:1em;
+   text-align:center;
+}
