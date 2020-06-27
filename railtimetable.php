@@ -178,6 +178,7 @@ function railtimetable_times_gettimes($times) {
     $times_arr = explode(',', $times);
 
     foreach ($times_arr as $time) {
+        $time = date("g:i", strtotime($time));
         $text .= "<td>".__($time, "railtimetable")."</td>";
     }
 
@@ -291,9 +292,19 @@ function railtimetable_smalltimetable($times, $heading, $extra = "") {
     foreach ($times as $time) {
         $html .= "<tr><td ".$style.">".$time->name."</td><td ".$style.">";
         if (strlen($time->up_deps) > 0) {
-            $html.= str_replace(",", ", ", $time->up_deps);
+            $t = explode(',', $time->up_deps);
+            $str = "";
+            foreach ($t as $tt) {
+                $str .= date("g:i", strtotime($tt)).", ";
+            }
+            $html .= substr($str, 0, strlen($str)-2);
         } else {
-            $html.= str_replace(",", ", ", $time->down_deps);
+            $t = explode(',', $time->down_deps);
+            $str = "";
+            foreach ($t as $tt) {
+                $str .= date("g:i", strtotime($tt)).", ";
+            }
+            $html .= substr($str, 0, strlen($str)-2);
         }
         $html .= "</td></tr>";
     }
