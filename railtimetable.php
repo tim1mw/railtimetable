@@ -23,7 +23,7 @@ function railtimetable_currentlang() {
         return "/".pll_current_language();
     }
 
-    return "";
+    return railtimetable_default_locale();
 }
 
 function railtimetable_currentlangfield() {
@@ -31,7 +31,7 @@ function railtimetable_currentlangfield() {
         return "link_".pll_current_language();
     }
 
-    return "";
+    return railtimetable_default_locale();
 }
 
 function railtimetable_currentlangcode() {
@@ -39,7 +39,7 @@ function railtimetable_currentlangcode() {
         return pll_current_language();
     }
 
-    return "none";
+    return railtimetable_default_locale();
 }
 
 function railtimetable_alllangcode() {
@@ -47,7 +47,11 @@ function railtimetable_alllangcode() {
         return pll_languages_list('locale');
     }
 
-    return array('default' => '');;
+    return array(0 => railtimetable_default_locale());;
+}
+
+function railtimetable_default_locale() {
+    return explode('_', get_locale())[0];
 }
 
 
@@ -239,7 +243,7 @@ function railtimetable_today($attr) {
             for ($loop = 0; $loop < count($found_events); $loop++) {
                 $links = json_decode($found_events[$loop]->link);
                 $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
-                $date = strftime("%e-%b-%Y", $evtdate->getTimestamp());
+                $date = strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp());
                 $html .= "<a class='timetable-special-front-head' href='".$links->$linkfield."'>".railtimetable_trans($found_events[$loop]->title)." - ".$date."</a><p>".railtimetable_trans($found_events[$loop]->description)."</p>";
             }
 
@@ -264,7 +268,7 @@ function railtimetable_today($attr) {
     }
 
     $nextd = new DateTime($times[0]->date);
-    $nextds = strftime("%e-%b-%Y", $nextd->getTimestamp());
+    $nextds = strftime(get_option('railtimetable_date_format'), $nextd->getTimestamp());
 
     if ($now == $tomorrow && $times[0]->date == $tomorrow) {
         $heading .= __("Tomorrow's Trains", "railtimetable");
@@ -281,16 +285,16 @@ function railtimetable_today($attr) {
     return $html;
 }
 
-function railtimetable_smalltimetable($times, $heading, $extra = "") {
+function railtimetable_smalltimetable($times, $heading, $extra = "", $buylink = false) {
     railtimetable_setlangage();
-    $html = "<h4 style='text-align:center;margin-bottom:10px;'>".$heading."</h4>";
+    $html = "<h4 class='timetable-smallheading'>".$heading."</h4>";
     $html .= $extra;
-    $style = "style='vertical-align:top;padding:2px;background:#".$times[0]->background.";color:#".$times[0]->colour.";'";
-    $html.="<table class='next-trains' ".$style."><tr><td ".$style.">".
-        __("Timetable", "railtimetable")."</td><td ".$style.">".railtimetable_trans($times[0]->timetable, $lang)."</td></tr>";
+    $style = "style='background:#".$times[0]->background.";color:#".$times[0]->colour.";'";
+    $html.="<table class='next-trains' ".$style."><tr><td class='next-trains-cell' ".$style.">".
+        __("Timetable", "railtimetable")."</td><td class='next-trains-cell' ".$style.">".railtimetable_trans($times[0]->timetable, $lang)."</td></tr>";
 
     foreach ($times as $time) {
-        $html .= "<tr><td ".$style.">".$time->name."</td><td ".$style.">";
+        $html .= "<tr><td class='next-trains-cell' ".$style.">".$time->name."</td><td class='next-trains-cell' ".$style.">";
         if (strlen($time->up_deps) > 0) {
             $t = explode(',', $time->up_deps);
             $str = "";
@@ -309,8 +313,13 @@ function railtimetable_smalltimetable($times, $heading, $extra = "") {
         $html .= "</td></tr>";
     }
     $html .= "</table>";
+
+    if ($buylink) {
+        $html .= "<div class='timetable-buytickets-wrapper'>".$buylink."</div>";
+    }
+
     if (strlen($times[0]->html) > 0) {
-        $html .= "<p style='margin-top:0px;padding-top:0px;text-align:right;font-size:small;'>".$times[0]->html."</p>";
+        $html .= "<p class='timetable-smallnotes'>".$times[0]->html."</p>";
     }
     return $html;
 }
@@ -323,6 +332,7 @@ function railtimetable_timesforstation($station, $stationfield, $date, $datesele
         "wp_railtimetable_timetables.background, ".
         "wp_railtimetable_timetables.colour, ".
         "wp_railtimetable_timetables.html, ".
+        "wp_railtimetable_timetables.buylink, ".
         "wp_railtimetable_times.up_deps, ".
         "wp_railtimetable_times.down_deps, ".
         "wp_railtimetable_stations.name ".
@@ -356,7 +366,7 @@ function railtimetable_events($attr) {
         $extra .= "<table>";
         for ($loop=0; $loop<count($found_events) && $linecount<$attr['number']; $loop++) {
             $start = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
-            $dates = array(strftime("%e-%b-%Y", $start->getTimestamp()));
+            $dates = array(strftime(get_option('railtimetable_date_format'), $start->getTimestamp()));
 
             $linkfield = railtimetable_currentlangcode();
             $links = json_decode($found_events[$loop]->link);
@@ -367,7 +377,7 @@ function railtimetable_events($attr) {
                     break;
                 } else {
                     $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$iloop]->date);
-                    $dates[] = strftime("%e-%b-%Y", $evtdate->getTimestamp());
+                    $dates[] = strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp());
                 }
             }
             $date = implode(', ', $dates);
@@ -408,7 +418,7 @@ function railtimetable_events_full($attr) {
         $extra .= "<table>";
         for ($loop=0; $loop<count($found_events); $loop++) {
             $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
-            $dates = array(strftime("%e-%b-%Y", $evtdate->getTimestamp()));
+            $dates = array(strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp()));
 
             $linkfield = railtimetable_currentlangcode();
             $links = json_decode($found_events[$loop]->link);
@@ -419,7 +429,7 @@ function railtimetable_events_full($attr) {
                     break;
                 } else {
                     $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$iloop]->date);
-                    $dates[] = strftime("%e-%b-%Y", $evtdate->getTimestamp());
+                    $dates[] = strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp());
                 }
             }
             $date = implode(', ', $dates);
@@ -434,6 +444,23 @@ function railtimetable_events_full($attr) {
     }
 
     return $extra;
+}
+
+function railtimetable_events_buy($attrs) {
+    global $wpdb;
+    railtimetable_setlangage();
+
+    $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE {$wpdb->prefix}railtimetable_eventdetails.id = ".$attrs['id']." ORDER BY date ASC");
+
+    $html = "<div class='timetable-buytickets-list'>";
+    foreach ($found_events as $event) {
+        $evtdate = Datetime::createFromFormat('Y-m-d', $event->date);
+        $date = strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp());
+        $html .= "<span class='timetable-buytickets-list-span'>".get_buylink($event->buylink, $evtdate->getTimestamp(), $date, '')."</span> ";
+    }
+    $html .= "</div>";
+
+    return $html;
 }
 
 function railtimetable_script()
@@ -518,13 +545,17 @@ function railtimetable_popup() {
 
         $extra = "";
         $linkfield = railtimetable_currentlangcode();
+        $buylink = false;
         if ($found_events) {
-            $extra .= "<div style='margin-top:1em;margin-bottom:1em;'><h5>".__("Special Event", "railtimetable").": ";
+            $extra .= "<div class='timetable-popupevent'><h5>".__("Special Event", "railtimetable").":<br />";
             for ($loop=0; $loop<count($found_events); $loop++) {
                 $links = json_decode($found_events[$loop]->link);
                 $extra .= "<a href='".$links->$linkfield."'>".railtimetable_trans($found_events[$loop]->title)."</a>";
                 if ($loop < count($found_events)-1) {
                     $extra .= " & ";
+                }
+                if (strlen($found_events[$loop]->buylink) > 0 && !$buylink) {
+                    $buylink = get_buylink($found_events[$loop]->buylink, $date->getTimestamp());
                 }
             }
             $extra .= "</h5></div>";
@@ -532,18 +563,35 @@ function railtimetable_popup() {
 
         // Get the first station
         $numstations = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
-
         $first = railtimetable_timesforstation(0, "sequence", $date->format('Y-m-d'), "=");
         $last = railtimetable_timesforstation($numstations - 1, "sequence", $date->format('Y-m-d'), "=");
-        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")." ". strftime("%e-%b-%Y", $date->getTimestamp()), $extra);
-
-        if (strlen($first[0]->html) > 0) {
-            echo railtimetable_trans($first[0]->html);
+        if (!$buylink) {
+            if (strlen($first[0]->buylink) >0) {
+                $buylink = get_buylink($first[0]->buylink, $date->getTimestamp());
+            }
         }
+
+        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")."<br />". strftime(get_option('railtimetable_date_format'), $date->getTimestamp()), $extra, $buylink);
 
         exit();
    };
 
+}
+
+function get_buylink($buylink, $datestamp, $text = false, $class = 'timetable-buytickets') {
+    if (!$text) {
+        $text = __("Buy Tickets", "railtimetable");
+    }
+
+    preg_match('/\[[^]]+\]/', $buylink, $matches);
+
+    if (count($matches) > 0) {
+        $fmt = substr($matches[0], 1, -1);
+        $time = trim(strftime($fmt, $datestamp));
+        $buylink = preg_replace('/\[[^]]+\]/', $time, $buylink);
+    }
+
+    return "<a class='".$class."' href='".$buylink."'>".$text."</a>";
 }
 
 
@@ -553,6 +601,7 @@ add_shortcode('railtimetable_times_all', 'railtimetable_times_all');
 add_shortcode('railtimetable_today', 'railtimetable_today');
 add_shortcode('railtimetable_events', 'railtimetable_events');
 add_shortcode('railtimetable_events_full', 'railtimetable_events_full');
+add_shortcode('railtimetable_events_buy', 'railtimetable_events_buy');
 
 add_action( 'init', 'railtimetable_load_textdomain' );
 add_action( 'wp_enqueue_scripts', 'railtimetable_script' );

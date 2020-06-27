@@ -41,3 +41,7 @@ msgstr "Dim Trenau Heddiw"
 #
 msgid "Close"
 msgstr "Caewch"
+
+#
+msgid "Buy Tickets"
+msgstr "Prynu Tocynnau"
