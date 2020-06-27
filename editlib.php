@@ -21,8 +21,10 @@ function railtimetable_add_pages() {
 }
 
 function railtimetable_register_settings() {
-   add_option( 'railtimetable_date_format', 'Y-m-d');
+   add_option( 'railtimetable_date_format', '%e-%b-%y');
    register_setting( 'railtimetable_options_main', 'railtimetable_date_format'); 
+   add_option( 'railtimetable_time_format', '%l.%M');
+   register_setting( 'railtimetable_options_main', 'railtimetable_time_format'); 
 }
 
 function railtimetable_edit() {
@@ -35,6 +37,10 @@ function railtimetable_edit() {
         <tr valign="top">
             <th scope="row"><label for="railtimetable_date_format">Display Date format</label></th>
             <td><input type="text" id="railtimetable_date_format" name="railtimetable_date_format" value="<?php echo get_option('railtimetable_date_format'); ?>" /> Use <a href='https://www.php.net/manual/en/function.strftime' target='_blank'>PHP strftime formatting parameters</a> here</td>
+        </tr>
+        <tr valign="top">
+            <th scope="row"><label for="railtimetable_time_format">Display Time format</label></th>
+            <td><input type="text" id="railtimetable_time_format" name="railtimetable_time_format" value="<?php echo get_option('railtimetable_time_format'); ?>" /> Use <a href='https://www.php.net/manual/en/function.strftime' target='_blank'>PHP strftime formatting parameters</a> here</td>
         </tr>
     </table>
     <?php submit_button(); ?>
@@ -230,6 +236,7 @@ function railtimetable_edit_times($id) {
     $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$id."' ");
 
     echo "<h2>Update Timetable Times: <span style='text-transform:capitalize'>".$tt->timetable."</span></h2>".
+        "<p>Please use 24 hour clock here and set the Display Time format to control how it is displayed</p>".
         "<form method='post' action=''>\n".
         "<input type='hidden' name='action' value='edittimes' />".
         "<input type='hidden' name='id' value='".$id."' />";

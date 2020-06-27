@@ -180,9 +180,9 @@ function railtimetable_times_thalf($stations, $dir, $timetable) {
 
 function railtimetable_times_gettimes($times) {
     $times_arr = explode(',', $times);
-
+    $fmt = get_option('railtimetable_time_format');
     foreach ($times_arr as $time) {
-        $time = date("g:i", strtotime($time));
+        $time = strftime($fmt, strtotime($time));
         $text .= "<td>".__($time, "railtimetable")."</td>";
     }
 
@@ -295,18 +295,19 @@ function railtimetable_smalltimetable($times, $heading, $extra = "", $buylink = 
 
     foreach ($times as $time) {
         $html .= "<tr><td class='next-trains-cell' ".$style.">".$time->name."</td><td class='next-trains-cell' ".$style.">";
+        $fmt = get_option('railtimetable_time_format');
         if (strlen($time->up_deps) > 0) {
             $t = explode(',', $time->up_deps);
             $str = "";
             foreach ($t as $tt) {
-                $str .= date("g:i", strtotime($tt)).", ";
+                $str .= strftime($fmt, strtotime($tt)).", ";
             }
             $html .= substr($str, 0, strlen($str)-2);
         } else {
             $t = explode(',', $time->down_deps);
             $str = "";
             foreach ($t as $tt) {
-                $str .= date("g:i", strtotime($tt)).", ";
+                $str .= strftime($fmt, strtotime($tt)).", ";
             }
             $html .= substr($str, 0, strlen($str)-2);
         }
@@ -321,6 +322,7 @@ function railtimetable_smalltimetable($times, $heading, $extra = "", $buylink = 
     if (strlen($times[0]->html) > 0) {
         $html .= "<p class='timetable-smallnotes'>".$times[0]->html."</p>";
     }
+file_put_contents("/home/httpd/balatest.my-place.org.uk/x.txt", $html);
     return $html;
 }
 
@@ -571,7 +573,7 @@ function railtimetable_popup() {
             }
         }
 
-        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")."<br />". strftime(get_option('railtimetable_date_format'), $date->getTimestamp()), $extra, $buylink);
+        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")."<br />". strftime(get_option('railtimetable_date_format'), $date->getTimestamp()). $date->getTimestamp(), $extra, $buylink);
 
         exit();
    };
