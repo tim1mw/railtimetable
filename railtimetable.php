@@ -322,7 +322,7 @@ function railtimetable_smalltimetable($times, $heading, $extra = "", $buylink = 
     if (strlen($times[0]->html) > 0) {
         $html .= "<p class='timetable-smallnotes'>".$times[0]->html."</p>";
     }
-file_put_contents("/home/httpd/balatest.my-place.org.uk/x.txt", $html);
+
     return $html;
 }
 
