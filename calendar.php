@@ -32,7 +32,11 @@ class Calendar
             " {$wpdb->prefix}railtimetable_dates.timetableid = {$wpdb->prefix}railtimetable_timetables.id ".
             "WHERE {$wpdb->prefix}railtimetable_dates.date = '".$date->format('Y-m-d')."'", OBJECT );
 
-        return ($found_events[0]) ? : false;
+        if (count($found_events) > 0) {
+            return $found_events[0];
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -69,7 +73,6 @@ class Calendar
 
         $today = new DateTime();
         $total_days_in_month = (int) $date->format('t');
-        $color = $color ? : '';
         $calendar .= '<table class="calendar">';
         $calendar .= '<thead>';
         $calendar .= '<tr class="calendar-title">';

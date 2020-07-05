@@ -181,12 +181,34 @@ function railtimetable_times_thalf($stations, $dir, $timetable) {
 function railtimetable_times_gettimes($times) {
     $times_arr = explode(',', $times);
     $fmt = get_option('railtimetable_time_format');
+    $text = '';
     foreach ($times_arr as $time) {
-        $time = strftime($fmt, strtotime(str_replace('*', '', $time)));
-        $text .= "<td>".__($time, "railtimetable")."</td>";
+        $text .= "<td>".railtimetable_format_time($time, $fmt)."</td>";
+    }
+    return $text;
+}
+
+function railtimetable_format_time($time, $fmt) {
+
+    if (strpos($time, '&') !== false) {
+        $parts = explode('&', $time);
+        $np = array();
+        foreach ($parts as $part) {
+            $np[] = strftime($fmt, strtotime(str_replace('*', '', $part)));
+        }
+        $disp = implode(' & ', $np);
+    } else { 
+        $disp = strftime($fmt, strtotime(str_replace('*', '', $time)));
     }
 
-    return $text;
+    if ($disp == '12.00') {
+        $disp = $time;
+    } else {
+        if (strpos($time, '*') !== false) {
+            $disp .= '*';
+        }
+    }
+    return $disp;
 }
 
 function railtimetable_setlangage() {
@@ -291,23 +313,24 @@ function railtimetable_smalltimetable($times, $heading, $extra = "", $buylink = 
     $html .= $extra;
     $style = "style='background:#".$times[0]->background.";color:#".$times[0]->colour.";'";
     $html.="<table class='next-trains' ".$style."><tr><td class='next-trains-cell' ".$style.">".
-        __("Timetable", "railtimetable")."</td><td class='next-trains-cell' ".$style.">".railtimetable_trans($times[0]->timetable, $lang)."</td></tr>";
+        __("Timetable", "railtimetable")."</td><td class='next-trains-cell' ".$style.">".railtimetable_trans($times[0]->timetable)."</td></tr>";
 
+    $fmt = get_option('railtimetable_time_format');
     foreach ($times as $time) {
         $html .= "<tr><td class='next-trains-cell' ".$style.">".$time->name."</td><td class='next-trains-cell' ".$style.">";
-        $fmt = get_option('railtimetable_time_format');
+
         if (strlen($time->up_deps) > 0) {
             $t = explode(',', $time->up_deps);
             $str = "";
             foreach ($t as $tt) {
-                $str .= strftime($fmt, strtotime(str_replace('*', '', $tt))).", ";
+                $str .= railtimetable_format_time($tt, $fmt).", ";
             }
             $html .= substr($str, 0, strlen($str)-2);
         } else {
             $t = explode(',', $time->down_deps);
             $str = "";
             foreach ($t as $tt) {
-                $str .= strftime($fmt, strtotime(str_replace('*', '', $tt))).", ";
+                $str .= railtimetable_format_time($tt, $fmt).", ";
             }
             $html .= substr($str, 0, strlen($str)-2);
         }
