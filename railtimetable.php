@@ -573,7 +573,7 @@ function railtimetable_popup() {
             }
         }
 
-        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")."<br />". strftime(get_option('railtimetable_date_format'), $date->getTimestamp()). $date->getTimestamp(), $extra, $buylink);
+        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")."<br />". strftime(get_option('railtimetable_date_format'), $date->getTimestamp()), $extra, $buylink);
 
         exit();
    };
