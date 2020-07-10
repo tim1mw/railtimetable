@@ -572,10 +572,11 @@ function railtimetable_edit_calendar() {
 }
 
 
-function railtimetable_getyearselect() {
+function railtimetable_getyearselect($currentyear = false) {
     global $wpdb;
-    $currentyear = intval(date("Y"));
-
+    if ($currentyear == false) {
+        $currentyear = intval(date("Y"));
+    }
     if (array_key_exists('year', $_POST)) {
         $chosenyear = $_POST['year'];
     } else {
@@ -604,11 +605,13 @@ function railtimetable_getyearselect() {
     return $sel;
 }
 
-function railtimetable_getmonthselect() {
+function railtimetable_getmonthselect($chosenmonth = false) {
+    if ($chosenmonth == false) {
+        $chosenmonth = 1;
+    }
+
     if (array_key_exists('month', $_POST)) {
         $chosenmonth = intval($_POST['month']);
-    } else {
-        $chosenmonth = 1;
     }
 
     $sel = "<select name='month'>";
