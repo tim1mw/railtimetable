@@ -9,7 +9,7 @@ add_action( 'admin_init', 'railtimetable_register_settings' );
 // action function for above hook
 function railtimetable_add_pages() {
     // Add a new top-level menu (ill-advised):
-    add_menu_page(__('Rail Timetable','railtimetable'), __('Rail Timetable','railtimetable'), 'manage_options', 'railtimetable-top-level-handle', 'railtimetable_edit' );
+    add_menu_page(__('Rail Timetable','railtimetable'), __('Rail Timetable','railtimetable'), 'manage_options', 'railtimetable-top-level-handle', 'railtimetable_edit', '', 30);
 
     add_submenu_page('railtimetable-top-level-handle', __('Edit Stations','railtimetable'), __('Edit Stations','railtimetable'), 'manage_options', 'railtimetable-edit-stations', 'railtimetable_edit_stations');
 
