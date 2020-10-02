@@ -9,7 +9,7 @@ add_action( 'admin_init', 'railtimetable_register_settings' );
 // action function for above hook
 function railtimetable_add_pages() {
     // Add a new top-level menu (ill-advised):
-    add_menu_page(__('Rail Timetable','railtimetable'), __('Rail Timetable','railtimetable'), 'manage_options', 'railtimetable-top-level-handle', 'railtimetable_edit' );
+    add_menu_page(__('Rail Timetable','railtimetable'), __('Rail Timetable','railtimetable'), 'manage_options', 'railtimetable-top-level-handle', 'railtimetable_edit', '', 30);
 
     add_submenu_page('railtimetable-top-level-handle', __('Edit Stations','railtimetable'), __('Edit Stations','railtimetable'), 'manage_options', 'railtimetable-edit-stations', 'railtimetable_edit_stations');
 
@@ -77,7 +77,7 @@ function railtimetable_edit_stations() {
     <h1>Heritage Railway Timetable - Stations</h1>
     <form method='post' action=''>
     <input type='hidden' name='action' value='editstations' />
-    <table><tr><th>Station</th><th>Actions</th><tr>
+    <table><tr><th>Station</th><th>Description</th><th>Actions</th><tr>
     <?php
     $ids = array();
     $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
@@ -86,9 +86,11 @@ function railtimetable_edit_stations() {
         $ids[] = $stations[$loop]->id;
         echo "<tr>".
             "<td>".($stations[$loop]->sequence+1).
-            ": <input type='text' name='station_name_".$stations[$loop]->id."' size='25' value='".$stations[$loop]->name."' /></td><td>";
+            ": <input type='text' name='station_name_".$stations[$loop]->id."' size='25' value='".$stations[$loop]->name."' /></td>".
+            "<td><input type='text' name='station_description_".$stations[$loop]->id."' size='50' value='".$stations[$loop]->description."' /></td>".
+            "<td>";
 
-        echo "<button name='station_del_".$stations[$loop]->id."'>X</button>&nbsp;&nbsp;";
+        echo "<button name='station_del_".$stations[$loop]->id."' value='1'>X</button>&nbsp;&nbsp;";
 
         if ($stations[$loop]->sequence < $count -1) {
             echo "<button name='station_move_".$stations[$loop]->id."' value='1'>&darr;</button>";
@@ -106,6 +108,7 @@ function railtimetable_edit_stations() {
     <tr><th colspan="">New Station</th></tr>
     <tr>
         <td><input type='text' size='25' name='station_name_new' value='' /></td>
+        <td><input type='text' size='50' name='station_description_new' value='' /></td>
         <td></td>
     </tr>
     </table>
@@ -117,27 +120,27 @@ function railtimetable_edit_stations() {
 
 function railtimetable_updatestations() {
     global $wpdb;
-
-    if (strlen( $_POST['ids'] > 0)) {
+    if (strlen( $_POST['ids']) > 0) {
         $ids = explode(',', $_POST['ids']);
     } else {
+
         $ids = array();
     }
 
     foreach ($ids as $id) {
-        if (array_key_exists('station_del_'.$id, $_POST)) {
+        if (array_key_exists('station_del_'.$id, $_POST) && $_POST['station_del_'.$id] == 1) {
             $wpdb->delete($wpdb->prefix.'railtimetable_stations',  array('id' => $id));
             // Now fix the sequence....
             $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
 
             for ($loop = 0; $loop < count($stations); $loop++) {
-
                 $wpdb->update($wpdb->prefix.'railtimetable_stations', array('sequence' => $loop),  array('id' => $stations[$loop]->id));
             }
             continue;
         }
 
-        $params = array('name' => $_POST['station_name_'.$id]);
+        $params = array('name' => $_POST['station_name_'.$id], 'description' => $_POST['station_description_'.$id]);
+
         if (array_key_exists('station_move_'.$id, $_POST)) {
             $inc = intval($_POST['station_move_'.$id]);
             $current = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations WHERE id = '".$id."'")[0];
@@ -149,7 +152,10 @@ function railtimetable_updatestations() {
     }
 
     if (strlen($_POST['station_name_new']) > 0) {
-        $wpdb->insert($wpdb->prefix.'railtimetable_stations', array('name' => trim($_POST['station_name_new']), 'sequence' => count($ids)));
+        $wpdb->insert($wpdb->prefix.'railtimetable_stations',
+            array('name' => trim($_POST['station_name_new']), 
+            'description' => trim($_POST['station_name_description']), 
+            'sequence' => count($ids)));
     }
 }
 
@@ -572,10 +578,11 @@ function railtimetable_edit_calendar() {
 }
 
 
-function railtimetable_getyearselect() {
+function railtimetable_getyearselect($currentyear = false) {
     global $wpdb;
-    $currentyear = intval(date("Y"));
-
+    if ($currentyear == false) {
+        $currentyear = intval(date("Y"));
+    }
     if (array_key_exists('year', $_POST)) {
         $chosenyear = $_POST['year'];
     } else {
@@ -604,11 +611,13 @@ function railtimetable_getyearselect() {
     return $sel;
 }
 
-function railtimetable_getmonthselect() {
+function railtimetable_getmonthselect($chosenmonth = false) {
+    if ($chosenmonth == false) {
+        $chosenmonth = 1;
+    }
+
     if (array_key_exists('month', $_POST)) {
         $chosenmonth = intval($_POST['month']);
-    } else {
-        $chosenmonth = 1;
     }
 
     $sel = "<select name='month'>";
