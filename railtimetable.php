@@ -235,7 +235,7 @@ function railtimetable_today($attr) {
     $tomorrow = $datetime->format('Y-m-d');
 
     // If it's after 17:00 then visitors probably want tomorrows train times.
-    if (date('H') > 17) {
+    if (date('H') > 20) {
         $now = $tomorrow;
     }
 
@@ -275,7 +275,11 @@ function railtimetable_today($attr) {
             elseif ($times[0]->date == $now) {
                 return "<h4 style='text-align:center;margin-bottom:10px;'>".__("Today's Trains", "railtimetable")."</h4>".$html;
             } else {
-                return "<h4 style='text-align:center;margin-bottom:10px;'>".__("Next Trains", "railtimetable")."</h4>".$html;
+                if ($nextdate == $tomorrow) {
+                    return "<h4 style='text-align:center;margin-bottom:10px;'>".__("Tomorrow's Trains", "railtimetable")."</h4>".$html;
+                } else {
+                    return "<h4 style='text-align:center;margin-bottom:10px;'>".__("Next Trains", "railtimetable")."</h4>".$html;
+                }
             }
         }
     }
@@ -299,7 +303,11 @@ function railtimetable_today($attr) {
         $heading .= __("Today's Trains", "railtimetable");
     }
     else {
-        $heading .= __("Next trains on", "railtimetable")." ".$nextds;
+        if ($nextd->format('Y-m-d') == $tomorrow) {
+            $heading .= __("Tomorrow's Trains", "railtimetable");
+        } else {
+            $heading .= __("Next trains on", "railtimetable")." ".$nextds;
+        }
     }
 
     $html = railtimetable_smalltimetable($times, $heading);
