@@ -424,6 +424,8 @@ function railtimetable_events($attr) {
             }
         }
         $extra .= "</table>";
+    } else {
+        $extra .= "<p class='timetable-smallheading timetable-special-front'>".__("No Upcoming Events")."</p>";
     }
 
     return $extra;
