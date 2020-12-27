@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
 // Hook for adding admin menus
 add_action('admin_menu', 'railtimetable_add_pages');
-add_action( 'admin_init', 'railtimetable_register_settings' );
+add_action('admin_init', 'railtimetable_register_settings' );
 
 // action function for above hook
 function railtimetable_add_pages() {
@@ -18,6 +18,7 @@ function railtimetable_add_pages() {
     add_submenu_page('railtimetable-top-level-handle', __('Edit Events','railtimetable'), __('Edit Events','railtimetable'), 'manage_options', 'railtimetable-edit-events', 'railtimetable_edit_events');
 
     add_submenu_page('railtimetable-top-level-handle', __('Edit Calendar','railtimetable'), __('Edit Calendar','railtimetable'), 'manage_options', 'railtimetable-edit-calendar', 'railtimetable_edit_calendar');
+
 }
 
 function railtimetable_register_settings() {
@@ -27,11 +28,26 @@ function railtimetable_register_settings() {
    register_setting( 'railtimetable_options_main', 'railtimetable_time_format'); 
 }
 
+function railtimetable_verify_nonce() {
+    if(!isset( $_POST['railtimetable-nonce'])) {
+        wp_die( __( 'Missing nonce', 'railtimetable' ), __( 'Error', 'railtimetable'), array(
+            'response' => 403,
+            'back_link' => 'admin.php?page='.'railtimetable'));
+    }
+
+    if (!wp_verify_nonce( $_POST['railtimetable-nonce'], 'railtimetable-nonce') ) {
+        wp_die( __( 'Invalid nonce specified', 'railtimetable' ), __( 'Error', 'railtimetable'), array(
+            'response' => 403,
+            'back_link' => 'admin.php?page='.'railtimetable'));
+    }
+}
+
 function railtimetable_edit() {
     global $wpdb;
     ?>
     <h1>Heritage Railway Timetable</h1>
     <form method="post" action="options.php">
+
     <?php settings_fields('railtimetable_options_main'); ?>
     <table>
         <tr valign="top">
@@ -46,23 +62,25 @@ function railtimetable_edit() {
     <?php submit_button(); ?>
     </form>
     <?php
-    }
 }
 
 function railtimetable_edit_stations() {
     global $wpdb;
 
+/*
     if (array_key_exists('action', $_POST)) {
         switch ($_POST['action']) {
             case 'editstations':
                 railtimetable_updatestations();
         }
     }
-
+*/
+    $nonce = wp_create_nonce('railtimetable-nonce');
     ?>
     <h1>Heritage Railway Timetable - Stations</h1>
-    <form method='post' action=''>
-    <input type='hidden' name='action' value='editstations' />
+    <form method='post' action='<?php echo esc_url( admin_url('admin-post.php') ); ?>'>
+    <input type='hidden' name='action' value='railtimetable-editstations' />
+    <input type="hidden" name="railtimetable-nonce" value="<?php echo $nonce ?>" />
     <table><tr><th>Station</th><th>Description</th><th>Actions</th><tr>
     <?php
     $ids = array();
@@ -104,10 +122,16 @@ function railtimetable_edit_stations() {
     <?php
 }
 
+add_action('admin_post_railtimetable-editstations', 'railtimetable_updatestations');
+
 function railtimetable_updatestations() {
     global $wpdb;
-    if (strlen( $_POST['ids']) > 0) {
-        $ids = explode(',', $_POST['ids']);
+
+    railtimetable_verify_nonce();
+
+    $ids = sanitize_text_field($_POST['ids']);
+    if (strlen($ids) > 0) {
+        $ids = explode(',', $ids);
     } else {
 
         $ids = array();
@@ -125,7 +149,7 @@ function railtimetable_updatestations() {
             continue;
         }
 
-        $params = array('name' => $_POST['station_name_'.$id], 'description' => $_POST['station_description_'.$id]);
+        $params = array('name' => sanitize_text_field($_POST['station_name_'.$id]), 'description' => sanitize_text_field($_POST['station_description_'.$id]));
 
         if (array_key_exists('station_move_'.$id, $_POST)) {
             $inc = intval($_POST['station_move_'.$id]);
@@ -136,13 +160,16 @@ function railtimetable_updatestations() {
         }
         $wpdb->update($wpdb->prefix.'railtimetable_stations', $params,  array('id' => $id));
     }
-
-    if (strlen($_POST['station_name_new']) > 0) {
+    $stnnew = trim(sanitize_text_field($_POST['station_name_new']));
+    if (strlen($stnnew) > 0) {
         $wpdb->insert($wpdb->prefix.'railtimetable_stations',
-            array('name' => trim($_POST['station_name_new']), 
-            'description' => trim($_POST['station_name_description']), 
+            array('name' => $stnnew, 
+            'description' => trim(sanitize_text_field($_POST['station_description_new'])), 
             'sequence' => count($ids)));
     }
+
+    wp_redirect(site_url().'/wp-admin/admin.php?page=railtimetable-edit-stations');
+    exit;
 }
 
 function railtimetable_edit_timetables() {
