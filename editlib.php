@@ -66,15 +66,6 @@ function railtimetable_edit() {
 
 function railtimetable_edit_stations() {
     global $wpdb;
-
-/*
-    if (array_key_exists('action', $_POST)) {
-        switch ($_POST['action']) {
-            case 'editstations':
-                railtimetable_updatestations();
-        }
-    }
-*/
     $nonce = wp_create_nonce('railtimetable-nonce');
     ?>
     <h1>Heritage Railway Timetable - Stations</h1>
@@ -177,10 +168,10 @@ function railtimetable_edit_timetables() {
 
     if (array_key_exists('action', $_POST)) {
         switch ($_POST['action']) {
-            case 'edittimetable':
+            case 'railtimetable-edittimetable':
                 railtimetable_updatetimetable();
                 break;
-            case 'edittimes':
+            case 'railtimetable-edittimes':
                 railtimetable_updatetimes();
                 break;
         }
@@ -188,7 +179,7 @@ function railtimetable_edit_timetables() {
 
     // Do we have any edit or delete actions?
     if (array_key_exists('edit', $_POST)) {
-        $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$_POST['edit']."' ");
+        $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".sanitize_text_field($_POST['edit'])."' ");
         echo "<h2>Update Timetable Details</h2>";
         railtimetable_edit_timetable($_POST['edit'], $tt->timetable, $tt->background, $tt->colour, $tt->totaltrains, $tt->html, $tt->buylink, "Update Timetable" );
         return;
@@ -201,11 +192,12 @@ function railtimetable_edit_timetables() {
     }
 
     if (array_key_exists('del', $_POST)) {
-        $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$_POST['del']."' ");
+        $del = sanitize_text_field($_POST['del']);
+        $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$del."' ");
         if (array_key_exists('confirm', $_POST)) {
-            $wpdb->delete($wpdb->prefix."railtimetable_timetables", array('id' => $_POST['del']));
-            $wpdb->delete($wpdb->prefix."railtimetable_times", array('timetableid' => $_POST['del']));
-            $wpdb->delete($wpdb->prefix."railtimetable_dates", array('timetableid' => $_POST['del']));
+            $wpdb->delete($wpdb->prefix."railtimetable_timetables", array('id' => $del));
+            $wpdb->delete($wpdb->prefix."railtimetable_times", array('timetableid' => $del));
+            $wpdb->delete($wpdb->prefix."railtimetable_dates", array('timetableid' => $del));
             ?>
             <h2>"<?php echo $tt->timetable; ?>" Deleted.</h2>
             <?php
@@ -215,7 +207,7 @@ function railtimetable_edit_timetables() {
                 <h2>Are you sure you want to delete the "<?php echo $tt->timetable; ?>" timetable ?</h2>
                 <input type='hidden' name='confirm' value='1' />
                 <input type='hidden' name='del' value='<?php echo $tt->id; ?>' />
-                <input type='submit' value='Delete Event' />
+                <input type='submit' value='Delete Timetable' />
             </form>
             <?php
             return;
@@ -257,7 +249,7 @@ function railtimetable_edit_times($id) {
     echo "<h2>Update Timetable Times: <span style='text-transform:capitalize'>".$tt->timetable."</span></h2>".
         "<p>Please use 24 hour clock here and set the Display Time format to control how it is displayed</p>".
         "<form method='post' action=''>\n".
-        "<input type='hidden' name='action' value='edittimes' />".
+        "<input type='hidden' name='action' value='railtimetable-edittimes' />".
         "<input type='hidden' name='id' value='".$id."' />";
 
     $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
@@ -361,10 +353,14 @@ function railtimetable_get_updatetimes($key, $totaltrains) {
     $allempty = true;
     $strs = array();
     for ($loop=0; $loop < $totaltrains; $loop++) {
-        $strs[$loop] = trim(stripslashes($_POST[$key.$loop]));
-        if (strlen($strs[$loop]) > 0) {
-            $allempty = false;
-        }
+       if (array_key_exists($key.$loop, $_POST)) {
+           $strs[$loop] = trim(sanitize_text_field($_POST[$key.$loop]));
+           if (strlen($strs[$loop]) > 0) {
+               $allempty = false;
+           }
+       } else {
+           $strs[$loop] = "";
+       }
     }
 
     if ($allempty) {
@@ -379,7 +375,7 @@ function railtimetable_get_updatetimes($key, $totaltrains) {
 function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $colour = "", $totaltrains = 1, $notes = "", $buylink="", $button="Add Timetable") {
     ?>
     <form method='post' action=''>
-        <input type='hidden' name='action' value='edittimetable' />
+        <input type='hidden' name='action' value='railtimetable-edittimetable' />
         <input type='hidden' name='id' value='<?php echo htmlspecialchars($id); ?>' /> 
         <table><tr>
             <td>Timetable</td>
@@ -421,7 +417,12 @@ function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $c
 function railtimetable_updatetimetable() {
     global $wpdb;
 
-    $params = array('timetable' => strtolower(stripslashes($_POST['timetable'])), 'html' => stripslashes($_POST['html']), 'background' => trim($_POST['background']), 'colour' => trim($_POST['colour']), 'totaltrains' => intval($_POST['totaltrains']), 'buylink' => trim($_POST['buylink']));
+    $params = array('timetable' => strtolower(sanitize_text_field($_POST['timetable'])),
+        'html' => sanitize_textarea_field($_POST['html']),
+        'background' => trim(sanitize_text_field($_POST['background'])),
+        'colour' => trim(sanitize_text_field($_POST['colour'])),
+        'totaltrains' => intval($_POST['totaltrains']),
+        'buylink' => trim(sanitize_text_field($_POST['buylink'])));
     if (intval($_POST['id']) > -1) {
         $wpdb->update($wpdb->prefix.'railtimetable_timetables', $params,
             array('id' => $_POST['id']));
@@ -438,11 +439,11 @@ function railtimetable_edit_events() {
             $langs = railtimetable_alllangcode();
             $links = array();
             foreach ($langs as $lang) {
-                $links[$lang] = $_POST["link_".$lang];
+                $links[$lang] = sanitize_text_field($_POST["link_".$lang]);
             }
 
             $linksjson = json_encode($links);
-            $params = array('title' => stripslashes($_POST['title']), 'description' => stripslashes($_POST['desc']), 'link' => $linksjson, 'background' => trim($_POST['background']), 'colour' => trim($_POST['colour']), 'buylink' => trim($_POST['buylink']));
+            $params = array('title' => sanitize_text_field($_POST['title']), 'description' => sanitize_text_field($_POST['desc']), 'link' => $linksjson, 'background' => trim(sanitize_text_field($_POST['background'])), 'colour' => trim(sanitize_text_field($_POST['colour'])), 'buylink' => trim(sanitize_text_field($_POST['buylink'])));
             $id = intval($_POST['id']);
             if ($id > -1) {
                 $wpdb->update($wpdb->prefix.'railtimetable_eventdetails', $params,
@@ -455,17 +456,19 @@ function railtimetable_edit_events() {
 
     // Do we have any edit or delete actions?
     if (array_key_exists('edit', $_POST)) {
-        $evt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails WHERE id='".$_POST['edit']."' ");
+        $edit = sanitize_text_field($_POST['edit']);
+        $evt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails WHERE id='".$edit."' ");
         echo "<h2>Update Event</h2>";
-        railtimetable_edit_event($_POST['edit'], $evt->title, $evt->description, $evt->link, $evt->background, $evt->colour, $evt->buylink, $button="Update Event");
+        railtimetable_edit_event($edit, $evt->title, $evt->description, $evt->link, $evt->background, $evt->colour, $evt->buylink, $button="Update Event");
         return;
     }
 
     if (array_key_exists('del', $_POST)) {
-        $evt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails WHERE id='".$_POST['del']."' ");
+        $del = sanitize_text_field($_POST['del']);
+        $evt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails WHERE id='".$del."' ");
         if (array_key_exists('confirm', $_POST)) {
-            $wpdb->delete($wpdb->prefix."railtimetable_eventdetails", array('id' => $_POST['del']));
-            $wpdb->delete($wpdb->prefix."railtimetable_eventdays", array('event' => $_POST['del']));
+            $wpdb->delete($wpdb->prefix."railtimetable_eventdetails", array('id' => $del));
+            $wpdb->delete($wpdb->prefix."railtimetable_eventdays", array('event' => $del));
             ?>
             <h2>"<?php echo $evt->title; ?>" Deleted.</h2>
             <?php
@@ -585,7 +588,7 @@ function railtimetable_edit_calendar() {
             case 'updatecalendar':
                 railtimetable_updatecalendar();
             case 'filtercalendar':
-                railtimetable_showcalendaredit($_POST['year'], $_POST['month']);
+                railtimetable_showcalendaredit(sanitize_text_field($_POST['year']), sanitize_text_field($_POST['month']));
         }
     }
 }
@@ -597,7 +600,7 @@ function railtimetable_getyearselect($currentyear = false) {
         $currentyear = intval(date("Y"));
     }
     if (array_key_exists('year', $_POST)) {
-        $chosenyear = $_POST['year'];
+        $chosenyear = sanitize_text_field($_POST['year']);
     } else {
         $chosenyear = $currentyear;
     }
@@ -728,12 +731,12 @@ function railtimetable_showoptlist($events, $day, $evtno = 'n', $selected = -1) 
 function railtimetable_updatecalendar() {
     global $wpdb;
 
-    $year = $_POST['year'];
-    $month = $_POST['month'];
+    $year = sanitize_text_field($_POST['year']);
+    $month = sanitize_text_field($_POST['month']);
     $daysinmonth = intval(date("t", mktime(0, 0, 0, $month, 1, $year)));
     for ($day = 1; $day < $daysinmonth + 1; $day++) {
         // Do the timetable
-        $newtt = $_POST['timetable_'.$day];
+        $newtt = sanitize_text_field($_POST['timetable_'.$day]);
 
         $current = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_dates WHERE date = '".$year."-".$month."-".$day."'");
         if ($current) {
@@ -742,7 +745,7 @@ function railtimetable_updatecalendar() {
             if ($newtt == "none") {
                 $wpdb->delete($wpdb->prefix.'railtimetable_dates', array('id' => $rec->id));
             } else {
-                if ($newtt != $rec->timetable) {
+                if ($newtt != $rec->timetableid) {
                     $wpdb->update($wpdb->prefix.'railtimetable_dates', array('timetableid' => $newtt, 'date' => $year."-".$month."-".$day),  array('id' => $rec->id));
                 }
             }
@@ -757,7 +760,7 @@ function railtimetable_updatecalendar() {
         $todaysevents = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_eventdays WHERE date = '".$year."-".$month."-".$day."'");
         for ($loop=0; $loop<count($todaysevents); $loop++) {
             $key = 'event_'.$day.'_'.$todaysevents[$loop]->id;
-            $value = $_POST[$key];
+            $value = sanitize_text_field($_POST[$key]);
             if ($value != $todaysevents[$loop]->event) {
                 if ($value == -1) {
                     $wpdb->delete($wpdb->prefix.'railtimetable_eventdays', array('id' => $todaysevents[$loop]->id));
