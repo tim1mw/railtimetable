@@ -62,6 +62,76 @@ function railtimetable_edit() {
     <?php submit_button(); ?>
     </form>
     <?php
+    if (array_key_exists('action', $_POST)) {
+        switch ($_POST['action']) {
+            case 'converttimes':
+                railtimetable_converttimes();
+        }
+    }
+    if ($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}railtimetable_stntimes" ) == 0) {
+    ?>
+    <form action='' method='post'>
+    <input type='hidden' name='action' value='converttimes' />
+    <input type='submit' value='Convert Times table' />
+    </form>
+    <?php
+    }
+}
+
+function railtimetable_converttimes() {
+    global $wpdb;
+    $times = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_times");
+    foreach ($times as $time) {
+        $nt = array();
+        $nt['station'] = $time->station;
+        $nt['timetableid'] = $time->timetableid;
+
+        $nt['down_deps'] = railtimetable_converttime($time->down_deps);
+        $nt['up_deps'] = railtimetable_converttime($time->up_deps);
+        $nt['down_arrs'] = railtimetable_converttime($time->down_arrs);
+        $nt['up_arrs'] = railtimetable_converttime($time->up_arrs);
+        $wpdb->insert($wpdb->prefix.'railtimetable_stntimes', $nt);
+    }
+
+    $tts = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_timetables");
+    foreach ($tts as $t) {
+        $data = array();
+        if (strlen($t->colsmeta) == 0) {
+            for ($loop = 0; $loop< $t->totaltrains; $loop++) {
+                $nd = new stdclass();
+                $nd->notes = '';
+                $nd->rules = array();
+                $data[] = $nd;
+            }
+        } else {
+            $metas = explode(',',$t->colsmeta);
+            foreach ($metas as $meta) {
+                $nd = new stdclass();
+                $nd->notes = $meta;
+                $nd->rules = array();
+                $data[] = $nd;
+            }
+        }
+        
+        $wpdb->update($wpdb->prefix.'railtimetable_timetables', array('colsmeta' => json_encode($data)) , array('id' => $t->id));
+    }
+}
+
+function railtimetable_converttime($str) {
+   $times = explode(',', $str);
+   $nt = array();
+   foreach ($times as $time) {
+       $parts = explode('.', $time);
+       if (count($parts) == 0 || strlen(trim($time)) == 0 ) {
+           continue;
+       }
+       $data = new stdclass();
+       $data->hour = $parts[0];
+       $data->min = $parts[1];
+       $nt[] = $data;
+   }
+
+   return json_encode($nt);
 }
 
 function railtimetable_edit_stations() {
@@ -248,17 +318,18 @@ function railtimetable_edit_times($id) {
 
     echo "<h2>Update Timetable Times: <span style='text-transform:capitalize'>".$tt->timetable."</span></h2>".
         "<p>Please use 24 hour clock here and set the Display Time format to control how it is displayed</p>".
+        "<p>Rules determin special cases when trains don't run (or only run) on certain days of the week or dates. To specify that the train doesn't run on a day, ".
+        "start the line with !, for trains that only run on a specified date or date, use *. Follow that with either the day of the week as a number (monday=1, sunday=7) ".
+        " or the date written as YYYYMMDD. eg Train doesn't run on Friday '!5', train only runs on 27th June 2021 '*20200627'. Put one rule per line.</p>".
         "<form method='post' action=''>\n".
         "<input type='hidden' name='action' value='railtimetable-edittimes' />".
         "<input type='hidden' name='id' value='".$id."' />";
 
     $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
     $numstations = count($stations);
-    if ($tt->colsmeta == false) {
-        $tt->colsmeta = "";
-    }
+
     railtimetable_edit_times_single($id, $stations, $numstations, "down", $tt->totaltrains, $tt->colsmeta);
-    echo "<br/><br/><br/>\n";
+    echo "<br/>\n";
     railtimetable_edit_times_single($id, $stations, $numstations, "up", $tt->totaltrains);
     echo "<input type='submit' value='Update Times' />".
         "</form>\n";
@@ -266,7 +337,7 @@ function railtimetable_edit_times($id) {
 
 function railtimetable_edit_times_single($id, $stations, $numstations, $direction, $totaltrains, $colsmeta=false) {
     global $wpdb;
-    echo "<table>\n";
+    echo "<table style='border-collapse: collapse;'>\n";
 
     if ($direction == "up") {
         $startid = $numstations-1;
@@ -279,45 +350,68 @@ function railtimetable_edit_times_single($id, $stations, $numstations, $directio
     }
 
     if ($colsmeta !== false) {
+        $decode = json_decode($colsmeta);
         echo "<tr><td>Notes</td><td></td>\n";
-        railtimetable_edit_times_line($totaltrains, $colsmeta, 'notes_');
+        railtimetable_edit_notes_line($totaltrains, $decode, 'notes');
+        echo "</tr>\n";
+        echo "<tr><td>Rules</td><td></td>\n";
+        railtimetable_edit_rules_line($totaltrains, $decode);
         echo "</tr>\n";
     }
 
     for ($loop = $startid; $loop>-1 && $loop<$numstations; $loop=$loop+$inc) {
         $station = $stations[$loop];
-        $times = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_times WHERE timetableid='".$id."' AND station='".$station->sequence."'");
+        $times = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_stntimes WHERE timetableid='".$id."' AND station='".$station->id."'");
         if (!$times) {
             $times = new stdclass();
-            $times->down_deps="";
-            $times->down_arrs="";
-            $times->up_deps="";
-            $times->up_arrs="";
+            $times->down_deps="[]";
+            $times->down_arrs="[]";
+            $times->up_deps="[]";
+            $times->up_arrs="[]";
         }
 
         if ($station->sequence != $startid) {
             echo "<tr><th>".$station->name."</th><td>arr</td>\n";
             $key = $direction."_arrs";
-            railtimetable_edit_times_line($totaltrains, $times->$key, $key."_".$station->sequence."_");
+            railtimetable_edit_times_line($totaltrains, json_decode($times->$key), $key."_".$station->id);
         }
 
         if ($station->sequence != $endid) {
             echo "<tr><th>".$station->name."</th><td>dep</td>\n";
             $key = $direction."_deps";
-            railtimetable_edit_times_line($totaltrains, $times->$key, $key."_".$station->sequence."_");
+            railtimetable_edit_times_line($totaltrains, json_decode($times->$key), $key."_".$station->id);
         }
     }
+
     echo "</table>\n";
 }
 
 function railtimetable_edit_times_line($totaltrains, $line, $key) {
-    $cols = explode(',',$line);
     for ($loop = 0; $loop < $totaltrains; $loop++) {
-        if (array_key_exists($loop, $cols)) {
-            echo "<td><input type='text' name='".$key.$loop."' value='".htmlentities($cols[$loop], ENT_QUOTES)."' size='6' /></td>\n";
-        } else {
-            echo "<td><input type='text' name='".$key.$loop."' value='' size='6' /></td>\n";
+        $hour = '';
+        $min = '';
+        if (array_key_exists($loop, $line)) {
+            if (property_exists($line[$loop], 'hour')) {
+                $hour = $line[$loop]->hour;
+                $min = $line[$loop]->min;
+            }
         }
+
+        echo "<td style='border-left:2px solid black;'>".
+            "<input type='text' name='".$key."_hour_".$loop."' value='".$hour."' minlength='0' maxlength='2' style='width:38px' />:".
+            "<input type='text' name='".$key."_min_".$loop."' value='".$min."' minlength='0' maxlength='2' style='width:38px' />".
+            "</td>\n";
+    }
+}
+
+function railtimetable_edit_notes_line($totaltrains, $line, $key) {
+    for ($loop = 0; $loop < $totaltrains; $loop++) {
+        echo "<td style='border-left:2px solid black;'><textarea type='text' name='notes_".$loop."' rows='2' style='width:80px' />".htmlentities($line[$loop]->notes, ENT_QUOTES)."</textarea></td>\n";
+    }
+}
+function railtimetable_edit_rules_line($totaltrains, $line) {
+    for ($loop = 0; $loop < $totaltrains; $loop++) {
+        echo "<td style='border-left:2px solid black;'><textarea name='rules_".$loop."' rows='4' style='width:80px' />".htmlentities(implode("\r\n", $line[$loop]->rules), ENT_QUOTES)."</textarea></td>\n";
     }
 }
 
@@ -325,51 +419,90 @@ function railtimetable_updatetimes() {
     global $wpdb;
     $id = intval($_POST['id']);
     $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$id."' ");
-    $notes = railtimetable_get_updatetimes("notes_", $tt->totaltrains, false);
-    $wpdb->update($wpdb->prefix.'railtimetable_timetables', array('colsmeta' => $notes), array('id' => $id));
+    $meta = railtimetable_get_times_meta($tt->totaltrains);
+    $wpdb->update($wpdb->prefix.'railtimetable_timetables', array('colsmeta' => $meta), array('id' => $id));
 
     $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
-    //$numstations = count($stations);
-    //$timetables = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_times WHERE timetableid='".$id."'");
-    foreach ($stations as $station) {
-        $down_deps = railtimetable_get_updatetimes('down_deps_'.$station->sequence.'_', $tt->totaltrains);
-        $down_arrs = railtimetable_get_updatetimes('down_arrs_'.$station->sequence.'_', $tt->totaltrains);
-        $up_deps = railtimetable_get_updatetimes('up_deps_'.$station->sequence.'_', $tt->totaltrains);
-        $up_arrs = railtimetable_get_updatetimes('up_arrs_'.$station->sequence.'_', $tt->totaltrains);
 
-        $timesrow = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}railtimetable_times WHERE station=".$station->sequence." AND timetableid=".$tt->id);
+    foreach ($stations as $station) {
+        $down_deps = railtimetable_get_updatetimes('down_deps_'.$station->id.'_', $tt->totaltrains);
+        $down_arrs = railtimetable_get_updatetimes('down_arrs_'.$station->id.'_', $tt->totaltrains);
+        $up_deps = railtimetable_get_updatetimes('up_deps_'.$station->id.'_', $tt->totaltrains);
+        $up_arrs = railtimetable_get_updatetimes('up_arrs_'.$station->id.'_', $tt->totaltrains);
+
+        $timesrow = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}railtimetable_stntimes WHERE station=".$station->id." AND timetableid=".$tt->id);
         if ($timesrow) {
-            $wpdb->update($wpdb->prefix.'railtimetable_times',
+            $wpdb->update($wpdb->prefix.'railtimetable_stntimes',
                 array('down_deps' => $down_deps, 'down_arrs' => $down_arrs, 'up_deps' => $up_deps, 'up_arrs' => $up_arrs),
                 array('id' => $timesrow));
         } else {
-            $wpdb->insert($wpdb->prefix.'railtimetable_times',
-                array('station' => $station->sequence, 'timetableid' => $tt->id, 'down_deps' => $down_deps, 'down_arrs' => $down_arrs, 'up_deps' => $up_deps, 'up_arrs' => $up_arrs));
+            $wpdb->insert($wpdb->prefix.'railtimetable_stntimes',
+                array('station' => $station->id, 'timetableid' => $tt->id, 'down_deps' => $down_deps, 'down_arrs' => $down_arrs, 'up_deps' => $up_deps, 'up_arrs' => $up_arrs));
         }
     }
+}
+
+function railtimetable_get_times_meta($totaltrains) {
+    $allempty = true;
+    $strs = array();
+    for ($loop=0; $loop < $totaltrains; $loop++) {
+       $strs[$loop] = new stdclass();
+       if (array_key_exists('notes_'.$loop, $_POST)) {
+           $strs[$loop]->notes =  sanitize_textarea_field($_POST["notes_".$loop]);
+           $allempty = false;
+       } else {
+           $strs[$loop]->notes = '';
+       }
+       if (array_key_exists('rules_'.$loop, $_POST)) {
+           $rules =  sanitize_textarea_field($_POST["rules_".$loop]);
+           $strs[$loop]->rules = explode("\r\n", $rules);
+           $allempty = false;
+       } else {
+           $strs[$loop]->rules = array();
+       }
+    }
+
+    if ($allempty) {
+        $strs = array();
+    }
+
+    return json_encode($strs);
 }
 
 function railtimetable_get_updatetimes($key, $totaltrains) {
     $allempty = true;
     $strs = array();
     for ($loop=0; $loop < $totaltrains; $loop++) {
-       if (array_key_exists($key.$loop, $_POST)) {
-           $strs[$loop] = trim(sanitize_text_field($_POST[$key.$loop]));
-           if (strlen($strs[$loop]) > 0) {
+       $strs[$loop] = new stdclass();
+       if (array_key_exists($key.'hour_'.$loop, $_POST)) {
+           $strs[$loop]->hour = sanitize_text_field($_POST[$key.'hour_'.$loop]);
+           $strs[$loop]->min = sanitize_text_field($_POST[$key.'min_'.$loop]);
+           if (strlen($strs[$loop]->hour) > 0 || strlen($strs[$loop]->min) > 0) {
                $allempty = false;
            }
+           if ($strs[$loop]->hour > 23) {
+               $strs[$loop]->hour = 23;
+           }
+           if ($strs[$loop]->hour < 0) {
+               $strs[$loop]->hour = 0;
+           }
+           if ($strs[$loop]->min > 59) {
+               $strs[$loop]->min = 59;
+           }
+           if ($strs[$loop]->min < 0) {
+               $strs[$loop]->min = 0;
+           }
        } else {
-           $strs[$loop] = "";
+           $strs[$loop]->hour = '';
+           $strs[$loop]->min = '';
        }
     }
 
     if ($allempty) {
-        $data = '';
-    } else {
-        $data = implode(',',$strs);
+        $strs = array();
     }
 
-    return $data;
+    return json_encode($strs);
 }
 
 function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $colour = "", $totaltrains = 1, $notes = "", $buylink="", $button="Add Timetable") {
