@@ -538,7 +538,7 @@ function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $c
             <td>Buy link</td>
             <td><input type='text' name='buylink' size='80' value='<?php echo htmlspecialchars($buylink); ?>' /></td>
         </tr><tr>
-            <td></td><td>Use <a href='https://www.php.net/manual/en/function.strftime' target='_blank'>PHP strftime formatting parameters</a> here to insert a date</td>
+            <td></td><td>Use <a href='https://www.php.net/manual/en/datetime.format.php' target='_blank'>PHP strftime formatting parameters</a> here to insert a date</td>
         </tr><tr>
             <td></td>
             <td><input type='submit' value='<?php echo $button; ?>' /></td>
