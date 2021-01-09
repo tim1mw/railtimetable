@@ -411,7 +411,12 @@ function railtimetable_edit_notes_line($totaltrains, $line, $key) {
 }
 function railtimetable_edit_rules_line($totaltrains, $line) {
     for ($loop = 0; $loop < $totaltrains; $loop++) {
-        echo "<td style='border-left:2px solid black;'><textarea name='rules_".$loop."' rows='4' style='width:80px;font-size:small;' />".htmlentities(implode("\r\n", $line[$loop]->rules), ENT_QUOTES)."</textarea></td>\n";
+        $rulesc = array();
+        foreach ($line[$loop]->rules as $rule) {
+            $rulesc[] = $rule->code.$rule->str;
+        }
+
+        echo "<td style='border-left:2px solid black;'><textarea name='rules_".$loop."' rows='4' style='width:80px;font-size:small;' />".htmlentities(implode("\r\n", $rulesc), ENT_QUOTES)."</textarea></td>\n";
     }
 }
 
@@ -455,7 +460,36 @@ function railtimetable_get_times_meta($totaltrains) {
        }
        if (array_key_exists('rules_'.$loop, $_POST)) {
            $rules =  sanitize_textarea_field($_POST["rules_".$loop]);
-           $strs[$loop]->rules = explode("\r\n", $rules);
+           $rules = explode("\r\n", $rules);
+           $prules = array();
+           foreach ($rules as $rule) {
+               $rule = trim($rule);
+               // Get the rule code, first char
+               $code = substr($rule, 0, 1);
+               if ($code != "!" && $code != "*") {
+                   continue;
+               }
+               // Get the following string
+               $str = substr($rule, 1);
+               $strl = strlen($str);
+               // Should be either 1 char for a day rule or 8 for a date rule
+               if ($strl != 1 && $strl != 8) {
+                   continue;
+               }
+               // If it's a date, parse it and check the parsed version matches what was typed in
+               if ($strl == 8) {
+                   $date = DateTime::createFromFormat('Ymd', $str);
+                   $df = $date->format('Ymd');
+                   if ($df != $str) {
+                       continue;
+                   }
+               }
+               $r = new stdclass();
+               $r->code = $code;
+               $r->str = $str;
+               $prules[] = $r;
+           }
+           $strs[$loop]->rules = $prules;
            $allempty = false;
        } else {
            $strs[$loop]->rules = array();

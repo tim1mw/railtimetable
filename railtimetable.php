@@ -287,27 +287,32 @@ function railtimetable_today($attr) {
 
     $nextd = new DateTime($times[0]->date);
     $nextds = strftime(get_option('railtimetable_date_format'), $nextd->getTimestamp());
+    $adate = null;
 
     if ($now == $tomorrow && $times[0]->date == $tomorrow) {
         $heading .= __("Tomorrow's Trains", "railtimetable");
+        $adate = $tomorrow;
     }
     elseif ($times[0]->date == $now) {
         $heading .= __("Today's Trains", "railtimetable");
+        $adate = $now;
     }
     else {
         if ($nextd->format('Y-m-d') == $tomorrow) {
             $heading .= __("Tomorrow's Trains", "railtimetable");
+            $adate = $tomorrow;
         } else {
             $heading .= __("Next trains on", "railtimetable")." ".$nextds;
+            $adate = $nextds;
         }
     }
 
-    $html = railtimetable_smalltimetable($times, $heading);
+    $html = railtimetable_smalltimetable($times, $heading, $adate);
 
     return $html;
 }
 
-function railtimetable_smalltimetable($times, $heading, $extra = "", $buylink = false) {
+function railtimetable_smalltimetable($times, $heading, $fordate, $extra = "", $buylink = false) {
     railtimetable_setlangage();
     $html = "<h4 class='timetable-smallheading'>".$heading."</h4>";
     $html .= $extra;
@@ -318,8 +323,7 @@ function railtimetable_smalltimetable($times, $heading, $extra = "", $buylink = 
     $fmt = get_option('railtimetable_time_format');
     foreach ($times as $time) {
         $html .= "<tr><td class='next-trains-cell' ".$style.">".$time->name."</td><td class='next-trains-cell' ".$style.">";
-
-        $updeps = json_decode($time->up_deps);
+        $updeps = railtimetable_processtimes($time->up_deps, $time->colsmeta, $fordate);
         if (count($updeps) > 0) {
             $str = "";
             foreach ($updeps as $tt) {
@@ -327,7 +331,7 @@ function railtimetable_smalltimetable($times, $heading, $extra = "", $buylink = 
             }
             $html .= substr($str, 0, strlen($str)-2);
         } else {
-            $t = json_decode($time->down_deps);
+            $t = railtimetable_processtimes($time->down_deps, $time->colsmeta, $fordate);
             $str = "";
             foreach ($t as $tt) {
                 $str .= railtimetable_format_time($tt, $fmt).", ";
@@ -349,6 +353,54 @@ function railtimetable_smalltimetable($times, $heading, $extra = "", $buylink = 
     return $html;
 }
 
+function railtimetable_processtimes($times, $colsmeta, $date) {
+    $filtered = array();
+    $meta = json_decode($colsmeta);
+    $times = json_decode($times);
+    $count = 0;
+
+    foreach ($times as $time) {
+        $rules = $meta[$count]->rules;
+        $count++;
+        foreach ($rules as $rule) {
+
+            switch ($rule->code) {
+                case '*':
+                    if (railtimetable_isruleforday($rule->str, $date)) {
+                        $filtered[] = $time;  
+                        continue 3;
+                    }
+                    break;
+                case '!':
+                    if (railtimetable_isruleforday($rule->str, $date)) {  
+                        continue 3;
+                    }
+                    break;
+            }
+        }
+        $filtered[] = $time;
+    }
+    return $filtered;
+}
+
+function railtimetable_isruleforday($str, $date) {
+    $len = strlen($str);
+    switch ($len) {
+        case 1:
+            if ($date->format("N") == $str) {
+                return true;
+            }
+            break;
+        case 8:
+            $tdate = DateTime::createFromFormat("Ymd", $str);
+            if ($tdate == $date) {
+                return true;
+            }
+            break;
+    }
+    return false;
+}
+
 function railtimetable_timesforstation($station, $stationfield, $date, $dateselector) {
     global $wpdb;
     $sql = "SELECT ".
@@ -358,6 +410,7 @@ function railtimetable_timesforstation($station, $stationfield, $date, $datesele
         "wp_railtimetable_timetables.colour, ".
         "wp_railtimetable_timetables.html, ".
         "wp_railtimetable_timetables.buylink, ".
+        "wp_railtimetable_timetables.colsmeta, ".
         "wp_railtimetable_stntimes.up_deps, ".
         "wp_railtimetable_stntimes.down_deps, ".
         "wp_railtimetable_stations.name ".
@@ -600,7 +653,7 @@ function railtimetable_popup() {
         }
 
         echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")."<br />".
-            strftime(get_option('railtimetable_date_format'), $date->getTimestamp()), $extra, $buylink);
+            strftime(get_option('railtimetable_date_format'), $date->getTimestamp()), $date, $extra, $buylink);
 
         exit();
    };
