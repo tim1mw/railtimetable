@@ -266,7 +266,7 @@ function railtimetable_edit_timetables() {
         $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".$del."' ");
         if (array_key_exists('confirm', $_POST)) {
             $wpdb->delete($wpdb->prefix."railtimetable_timetables", array('id' => $del));
-            $wpdb->delete($wpdb->prefix."railtimetable_times", array('timetableid' => $del));
+            $wpdb->delete($wpdb->prefix."railtimetable_stntimes", array('timetableid' => $del));
             $wpdb->delete($wpdb->prefix."railtimetable_dates", array('timetableid' => $del));
             ?>
             <h2>"<?php echo $tt->timetable; ?>" Deleted.</h2>
@@ -406,12 +406,12 @@ function railtimetable_edit_times_line($totaltrains, $line, $key) {
 
 function railtimetable_edit_notes_line($totaltrains, $line, $key) {
     for ($loop = 0; $loop < $totaltrains; $loop++) {
-        echo "<td style='border-left:2px solid black;'><textarea type='text' name='notes_".$loop."' rows='2' style='width:80px' />".htmlentities($line[$loop]->notes, ENT_QUOTES)."</textarea></td>\n";
+        echo "<td style='border-left:2px solid black;'><textarea type='text' name='notes_".$loop."' rows='2' style='width:80px;font-size:small;' />".htmlentities($line[$loop]->notes, ENT_QUOTES)."</textarea></td>\n";
     }
 }
 function railtimetable_edit_rules_line($totaltrains, $line) {
     for ($loop = 0; $loop < $totaltrains; $loop++) {
-        echo "<td style='border-left:2px solid black;'><textarea name='rules_".$loop."' rows='4' style='width:80px' />".htmlentities(implode("\r\n", $line[$loop]->rules), ENT_QUOTES)."</textarea></td>\n";
+        echo "<td style='border-left:2px solid black;'><textarea name='rules_".$loop."' rows='4' style='width:80px;font-size:small;' />".htmlentities(implode("\r\n", $line[$loop]->rules), ENT_QUOTES)."</textarea></td>\n";
     }
 }
 
