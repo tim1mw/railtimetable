@@ -126,10 +126,16 @@ function railtimetable_render_times($tmeta) {
 
     $text .= "<tr><td class='timetable-header' style='background:#".$tmeta->background.";color:#".$tmeta->colour.";' colspan='2'>".__("Timetable", "railtimetable").":&nbsp;".railtimetable_trans($tmeta->timetable)."</td>";
 
+    $showrules = get_option('railtimetable_show_rules');
+
+
     $headers = json_decode($tmeta->colsmeta);
     for ($loop=0; $loop < $tmeta->totaltrains; $loop++) {
         if (array_key_exists($loop, $headers)) {
-            $header = railtimetable_ruleforcolumn($headers[$loop]->rules).railtimetable_trans($headers[$loop]->notes);   
+            $header = railtimetable_trans($headers[$loop]->notes);  
+            if ($showrules) {
+                $header .= railtimetable_ruleforcolumn($headers[$loop]->rules);
+            } 
         } else {
             $header = "";
         }
@@ -250,7 +256,7 @@ function railtimetable_times_gettimes($times_arr) {
     $fmt = get_option('railtimetable_time_format');
     $text = '';
     foreach ($times_arr as $time) {
-        $text .= "<td>".railtimetable_format_time($time, $fmt)."</td>";
+        $text .= "<td class='timetable-time-cell'>".railtimetable_format_time($time, $fmt)."</td>";
     }
     return $text;
 }

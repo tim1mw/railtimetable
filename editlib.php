@@ -26,6 +26,8 @@ function railtimetable_register_settings() {
    register_setting( 'railtimetable_options_main', 'railtimetable_date_format'); 
    add_option( 'railtimetable_time_format', '%l.%M');
    register_setting( 'railtimetable_options_main', 'railtimetable_time_format'); 
+   add_option( 'railtimetable_show_rules', '0');
+   register_setting( 'railtimetable_options_main', 'railtimetable_show_rules'); 
 }
 
 function railtimetable_verify_nonce() {
@@ -57,6 +59,11 @@ function railtimetable_edit() {
         <tr valign="top">
             <th scope="row"><label for="railtimetable_time_format">Display Time format</label></th>
             <td><input type="text" id="railtimetable_time_format" name="railtimetable_time_format" value="<?php echo get_option('railtimetable_time_format'); ?>" /> Use <a href='https://www.php.net/manual/en/function.strftime' target='_blank'>PHP strftime formatting parameters</a> here</td>
+        </tr>
+        <tr valign="top">
+            <th scope="row"><label for="railtimetable_show_rules">Show rules in timetable header</label></th>
+            <td><input type="checkbox" id="railtimetable_show_rules" name="railtimetable_show_rules" value="1"
+                <?php checked(get_option('railtimetable_show_rules')); ?>" /></td>
         </tr>
     </table>
     <?php submit_button(); ?>
@@ -533,7 +540,7 @@ function railtimetable_get_times_meta($totaltrains) {
     for ($loop=0; $loop < $totaltrains; $loop++) {
        $strs[$loop] = new stdclass();
        if (array_key_exists('notes_'.$loop, $_POST)) {
-           $strs[$loop]->notes =  sanitize_textarea_field($_POST["notes_".$loop]);
+           $strs[$loop]->notes =  wp_kses($_POST["notes_".$loop], array('br' => array()));
            $allempty = false;
        } else {
            $strs[$loop]->notes = '';

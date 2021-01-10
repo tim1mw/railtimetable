@@ -97,6 +97,10 @@
     overflow: auto;
 }
 
+.timetable-time-cell {
+    text-align:center;
+}
+
 #railtimetable-modal {
     background:#ffffff;
     display:none;
@@ -210,11 +214,12 @@
 
 .timetable-header-notes {
     font-weight:bold;
-    font-size:x-small;
+    font-size:small;
+    text-align:center;
 }
 
 .timetable-station-closed {
-    color:red;
+    color:gray;
     font-weight:lighter;
     text-decoration: line-through;
 }
@@ -223,4 +228,6 @@
     display: inline-block;
     text-decoration: none;
     font-size:small;
+    color:red;
+    font-weight:normal;
 }
