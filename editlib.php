@@ -92,8 +92,24 @@ function railtimetable_edit() {
         <table><tr>
             <td>Start from date</td><td><input type='date' name='startdate' value="<?php echo date("Y-m-d"); ?>"/></td>
         </tr><table>
-        <?php submit_button("Export Data"); ?>  
+        <?php submit_button(__("Export Data")); ?>  
     </form>
+
+    <h2>Import Data</h2>
+    <p>Use the form below to import data from another timetable module instance. BE WARNED, this will replace the timetable in you database
+    with the imported data, so use with care</p>
+    <form method="post" action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" enctype="multipart/form-data">
+        <input type='hidden' name='action' value='railtimetable-importdata' />
+        <table><tr>
+            <td>Choose a file...</td>
+            <td><label for="file-upload"><input type="file" name="dataimport" accept="text/json, application/json"></label></td>
+        </tr><tr>
+            <td>I **Really** want to do this</td>
+            <td><input type='checkbox' name='doit' value='1' /></td>
+        </tr></table>
+        <?php submit_button(__("Import Data")); ?>
+    </form>
+
     <?php
     if (array_key_exists('action', $_POST)) {
         switch ($_POST['action']) {
@@ -132,6 +148,61 @@ function railtimetable_exportdata() {
     header("Pragma: no-cache");
     echo json_encode($export, JSON_PRETTY_PRINT);
     exit;
+}
+
+add_action('admin_post_railtimetable-importdata', 'railtimetable_importdata');
+
+function railtimetable_importdata() {
+    global $wpdb;
+    if (railtimetable_get_cbval('doit') != 1) {
+        echo __("You didn't really want to do this");
+        return;
+    }
+
+    if (!array_key_exists('dataimport', $_FILES)) {
+        echo __("No file uploaded");
+        return;
+    }
+
+    $fileTmpPath = $_FILES['dataimport']['tmp_name'];
+    $fileName = $_FILES['dataimport']['name'];
+    $fileSize = $_FILES['dataimport']['size'];
+    $fileType = $_FILES['dataimport']['type'];
+
+    if ($fileSize == 0) {
+        echo __("You have uploaded an empty file");
+        return;
+    }
+
+    if ($fileType != "text/json" && $fileType != "application/json" ) {
+        echo __("Not a JSON file");
+        return;
+    }
+    $data = json_decode(file_get_contents($fileTmpPath));
+    // Clear out the old data
+
+    $tables = array('stations', 'stntimes', 'timetables', 'eventdetails', 'dates', 'eventdays');
+echo "<pre>";
+    // Import stations 
+    foreach ($tables as $table) {
+        $wpdb->query("TRUNCATE {$wpdb->prefix}railtimetable_".$table);
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}railtimetable_".$table." AUTO_INCREMENT = 0");
+        foreach ($data->$table as $entry) {
+            $entry = (array) $entry;
+            $wpdb->insert($wpdb->prefix.'railtimetable_'.$table, $entry);
+
+            // For reasons I can't establish forcing AUTO_INCREMENT = 0 above still doesn't allow us to insert ID = 0
+            // Or WordPress is just ignoring the ID's. So do a check here to make sure we got the ID we wanted and force it
+            // If we didn't or everything will fall apart here.
+            if ($wpdb->insert_id != $entry['id']) {
+                $wpdb->query("UPDATE {$wpdb->prefix}railtimetable_".$table." SET id = ".$entry['id']." WHERE id = ".$wpdb->insert_id);
+            } 
+        }
+    }
+    echo "</pre>";
+    unlink($fileTmpPath);
+
+    wp_redirect(site_url().'/wp-admin/admin.php?page=railtimetable-edit-stations');
 }
 
 
