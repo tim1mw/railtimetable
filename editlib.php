@@ -251,7 +251,7 @@ function railtimetable_edit_timetables() {
     if (array_key_exists('edit', $_POST)) {
         $tt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE id='".sanitize_text_field($_POST['edit'])."' ");
         echo "<h2>Update Timetable Details</h2>";
-        railtimetable_edit_timetable($_POST['edit'], $tt->timetable, $tt->background, $tt->colour, $tt->totaltrains, $tt->html, $tt->buylink, "Update Timetable" );
+        railtimetable_edit_timetable($_POST['edit'], $tt->timetable, $tt->background, $tt->colour, $tt->totaltrains, $tt->html, $tt->buylink, $tt->hidden, "Update Timetable" );
         return;
     }
 
@@ -539,7 +539,7 @@ function railtimetable_get_updatetimes($key, $totaltrains) {
     return json_encode($strs);
 }
 
-function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $colour = "", $totaltrains = 1, $notes = "", $buylink="", $button="Add Timetable") {
+function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $colour = "", $totaltrains = 1, $notes = "", $buylink="", $hidden=0, $button="Add Timetable") {
     ?>
     <form method='post' action=''>
         <input type='hidden' name='action' value='railtimetable-edittimetable' />
@@ -569,6 +569,9 @@ function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $c
             <td>Text colour</td>
             <td><input type='text' name='colour' size='6' value='<?php echo htmlspecialchars($colour); ?>' /></td>
         </tr><tr>
+            <td>Hidden</td>
+            <td><input type='checkbox' name='hidden' value='1' <?php if ($hidden == 1) {echo "checked";} ?>/> (note, only hides in "all timetables" display, will still be shown on calendar where set)</td>
+        </tr><tr>
             <td>Buy link</td>
             <td><input type='text' name='buylink' size='80' value='<?php echo htmlspecialchars($buylink); ?>' /></td>
         </tr><tr>
@@ -589,6 +592,7 @@ function railtimetable_updatetimetable() {
         'background' => trim(sanitize_text_field($_POST['background'])),
         'colour' => trim(sanitize_text_field($_POST['colour'])),
         'totaltrains' => intval($_POST['totaltrains']),
+        'hidden' => intval($_POST['hidden']),
         'buylink' => trim(sanitize_text_field($_POST['buylink'])));
     if (intval($_POST['id']) > -1) {
         $wpdb->update($wpdb->prefix.'railtimetable_timetables', $params,

@@ -88,7 +88,7 @@ function railtimetable_times_all($attr) {
     global $wpdb;
     $html = '<div class="timetabletabs" id="timetabletabs"><ul style="margin:0px;">';
 
-    $tmetas = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_timetables ORDER BY totaltrains ASC");
+    $tmetas = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE hidden = 0 ORDER BY totaltrains ASC");
     $width = 100/count($tmetas);
     for($loop=0; $loop < count($tmetas); $loop++) {
         $html .= '<li class="railtimetable-'.$tmetas[$loop]->timetable.'"><a style="width:'.$width.'%" class="railtimetable-'.$tmetas[$loop]->timetable.'" href="#timetabletab'.$loop.'">'.railtimetable_trans($tmetas[$loop]->timetable).
