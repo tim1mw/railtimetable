@@ -701,8 +701,18 @@ function railtimetable_edit_events() {
                 $links[$lang] = sanitize_text_field($_POST["link_".$lang]);
             }
 
+            if (railtimetable_get_cbval('custombackcolour')) {
+                $background = substr(trim(sanitize_text_field($_POST['background'])), 1);
+            } else {
+                $background = '';
+            }
             $linksjson = json_encode($links);
-            $params = array('title' => sanitize_text_field($_POST['title']), 'description' => sanitize_text_field($_POST['desc']), 'link' => $linksjson, 'background' => trim(sanitize_text_field($_POST['background'])), 'colour' => trim(sanitize_text_field($_POST['colour'])), 'buylink' => trim(sanitize_text_field($_POST['buylink'])));
+            $params = array(
+                'title' => sanitize_text_field($_POST['title']),
+                'description' => sanitize_text_field($_POST['desc']),
+                'link' => $linksjson, 'background' => $background,
+                'colour' => substr(trim(sanitize_text_field($_POST['colour'])),1),
+                'buylink' => trim(sanitize_text_field($_POST['buylink'])));
             $id = intval($_POST['id']);
             if ($id > -1) {
                 $wpdb->update($wpdb->prefix.'railtimetable_eventdetails', $params,
@@ -776,7 +786,7 @@ function railtimetable_edit_events() {
     railtimetable_edit_event();
 }
 
-function railtimetable_edit_event($id=-1, $title="", $desc="", $linkjson="", $bg ="", $colour = "", $buylink = "", $button="Add Event") {
+function railtimetable_edit_event($id=-1, $title="", $desc="", $linkjson="", $bg = "", $colour = "000000", $buylink = "", $button="Add Event") {
     ?>
     <form method='post' action=''>
         <input type='hidden' name='action' value='editevent' />
@@ -804,17 +814,20 @@ function railtimetable_edit_event($id=-1, $title="", $desc="", $linkjson="", $bg
                     "</tr>";
             }
 
-        ?><tr>
-            <td>Background colour</td>
-            <td><input type='text' name='background' size='6' value='<?php echo htmlspecialchars($bg); ?>' /></td>
-        </tr><tr>
+        ?>
+       <tr>
             <td>Text colour</td>
-            <td><input type='text' name='colour' size='6' value='<?php echo htmlspecialchars($colour); ?>' /></td>
+            <td><input type='color' name='colour' value='#<?php echo htmlspecialchars($colour); ?>' /></td>
         </tr><tr>
             <td>Buy link</td>
             <td><input type='text' name='buylink' size='80' value='<?php echo htmlspecialchars($buylink); ?>' /></td>
         </tr><tr>
             <td></td><td>Use <a href='https://www.php.net/manual/en/function.strftime' target='_blank'>PHP strftime formatting parameters</a> here to insert a date</td>
+        </tr>
+        <tr>
+            <td>Use custom background colour</td>
+            <td><input type='checkbox' name='custombackcolour' value='1' <?php if (strlen($bg) > 0) {echo 'checked';} ?> />
+                Choose: <input type='color' name='background' value='#<?php echo htmlspecialchars($bg); ?>' /></td>
         </tr><tr>
             <td></td>
             <td><input type='submit' value='<?php echo $button; ?>' /></td>
