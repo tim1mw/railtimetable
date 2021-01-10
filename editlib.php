@@ -182,7 +182,7 @@ function railtimetable_importdata() {
     // Clear out the old data
 
     $tables = array('stations', 'stntimes', 'timetables', 'eventdetails', 'dates', 'eventdays');
-echo "<pre>";
+
     // Import stations 
     foreach ($tables as $table) {
         $wpdb->query("TRUNCATE {$wpdb->prefix}railtimetable_".$table);
@@ -199,7 +199,7 @@ echo "<pre>";
             } 
         }
     }
-    echo "</pre>";
+
     unlink($fileTmpPath);
 
     wp_redirect(site_url().'/wp-admin/admin.php?page=railtimetable-edit-stations');
