@@ -666,13 +666,13 @@ function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $c
 
 function railtimetable_updatetimetable() {
     global $wpdb;
-
+    $hidden = railtimetable_get_cbval('hidden');
     $params = array('timetable' => strtolower(sanitize_text_field($_POST['timetable'])),
         'html' => sanitize_textarea_field($_POST['html']),
         'background' => trim(sanitize_text_field($_POST['background'])),
         'colour' => trim(sanitize_text_field($_POST['colour'])),
         'totaltrains' => intval($_POST['totaltrains']),
-        'hidden' => intval($_POST['hidden']),
+        'hidden' => $hidden,
         'buylink' => trim(sanitize_text_field($_POST['buylink'])));
     if (intval($_POST['id']) > -1) {
         $wpdb->update($wpdb->prefix.'railtimetable_timetables', $params,
