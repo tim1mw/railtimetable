@@ -18,6 +18,9 @@ require_once(ABSPATH . 'wp-includes/pluggable.php');
 require_once('calendar.php');
 require_once('editlib.php');
 
+// Install the DB
+register_activation_hook( __FILE__, 'railtimetable_create_db' );
+
 function railtimetable_currentlang() {
     if (function_exists("pll_current_language")) {
         return "/".pll_current_language();
@@ -86,9 +89,12 @@ function railtimetable_show($attr) {
 
 function railtimetable_times_all($attr) {
     global $wpdb;
-    $html = '<div class="timetabletabs" id="timetabletabs"><ul style="margin:0px;">';
-
     $tmetas = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_timetables WHERE hidden = 0 ORDER BY totaltrains ASC");
+    if (count($tmetas) == 0) {
+        return __("The timetable is empty");
+    }
+
+    $html = '<div class="timetabletabs" id="timetabletabs"><ul style="margin:0px;">';
     $width = 100/count($tmetas);
     for($loop=0; $loop < count($tmetas); $loop++) {
         $html .= '<li class="railtimetable-'.$tmetas[$loop]->timetable.'"><a style="width:'.$width.'%" class="railtimetable-'.$tmetas[$loop]->timetable.'" href="#timetabletab'.$loop.'">'.railtimetable_trans($tmetas[$loop]->timetable).
@@ -303,8 +309,8 @@ function railtimetable_today($attr) {
         $results = railtimetable_timesforstation($station, "name", $now, ">=");
         if ($results) {
             $times[$index] = $results[0];
+            $nextdate = $results[0]->date;
         }
-        $nextdate = $results[0]->date;
     }
 
     // 

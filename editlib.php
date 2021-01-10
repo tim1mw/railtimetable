@@ -36,6 +36,16 @@ function railtimetable_register_settings() {
    register_setting( 'railtimetable_options_main', 'railtimetable_show_rules'); 
 }
 
+function railtimetable_create_db() {
+    global $wpdb;
+    $charset_collate = $wpdb->get_charset_collate();
+    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+    include('sqlimport.php');
+    foreach ($sql as $s) {
+        dbDelta($s);
+    }
+}
+
 function railtimetable_verify_nonce() {
     if(!isset( $_POST['railtimetable-nonce'])) {
         wp_die( __( 'Missing nonce', 'railtimetable' ), __( 'Error', 'railtimetable'), array(
