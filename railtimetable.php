@@ -129,11 +129,11 @@ function railtimetable_render_times($tmeta) {
     $headers = json_decode($tmeta->colsmeta);
     for ($loop=0; $loop < $tmeta->totaltrains; $loop++) {
         if (array_key_exists($loop, $headers)) {
-            $header = railtimetable_trans($headers[$loop]->notes);
+            $header = railtimetable_ruleforcolumn($headers[$loop]->rules).railtimetable_trans($headers[$loop]->notes);   
         } else {
             $header = "";
         }
-        $text .= "<td style='background:#".$tmeta->background.";color:#".$tmeta->colour.";'>".$header."</td>";
+        $text .= "<td style='font-weight:bold;font-size:x-small;background:#".$tmeta->background.";color:#".$tmeta->colour.";'>".$header."</td>";
     }
 
     $text.= "</tr>";
@@ -150,6 +150,50 @@ function railtimetable_render_times($tmeta) {
 
     $text .= "</div>";
     return $text;
+}
+
+function railtimetable_ruleforcolumn($rules) {
+    $not = array();
+    $only = array();
+
+    foreach ($rules as $rule) {
+        switch ($rule->code) {
+            case '*':
+                $only[] = railtimetable_interpretstring($rule->str);
+                break;
+            case '!':
+                $not[] = railtimetable_interpretstring($rule->str);
+                break;
+        }
+    }
+
+    $r = "";
+    if (count($not) > 0) {
+        $r .= __("Not")." ".implode(',<br />', $not);
+    }
+
+    if (count($only) > 0) {
+        if (strlen($r) > 0) {
+            $r .= "<br />";
+        }
+        $r .= __("Runs")." ".implode(', ', $only)."<br />";
+    }
+
+    return $r;
+}
+
+function railtimetable_interpretstring($str) {
+    $strl = strlen($str);
+    switch ($strl) {
+        case 1:
+            $days = array(false, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', );
+            $time = strtotime('last ' . $days[$str]);
+            return strftime('%A', $time);
+        case 8:
+            $date = DateTime::createFromFormat("Ymd", $str);
+            return strftime(get_option('railtimetable_date_format'), $date->getTimestamp());
+    }
+    return "Invalid";
 }
 
 function railtimetable_times_thalf($stations, $dir, $timetable) {
