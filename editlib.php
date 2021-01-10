@@ -61,6 +61,16 @@ function railtimetable_edit() {
     </table>
     <?php submit_button(); ?>
     </form>
+
+    <h2>Data Export</h2>
+    <p>Click the link below to export data for the ticket system or another copy of the timetable module.</p>
+    <form method='post' action='<?php echo esc_url( admin_url('admin-post.php') ); ?>'>
+        <input type='hidden' name='action' value='railtimetable-exportdata' />
+        <table><tr>
+            <td>Start from date</td><td><input type='date' name='startdate' value="<?php echo date("Y-m-d"); ?>"/></td>
+        </tr><table>
+        <?php submit_button("Export Data"); ?>  
+    </form>
     <?php
     if (array_key_exists('action', $_POST)) {
         switch ($_POST['action']) {
@@ -77,6 +87,30 @@ function railtimetable_edit() {
     <?php
     }
 }
+
+add_action('admin_post_railtimetable-exportdata', 'railtimetable_exportdata');
+
+function railtimetable_exportdata() {
+    global $wpdb;
+    $export = new stdclass();
+
+    $startdate = sanitize_text_field($_POST['startdate']);
+
+    $export->source = get_site_url();
+    $export->stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations");
+    $export->stntimes = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stntimes");
+    $export->timetables = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_timetables");
+    $export->eventdetails = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails");
+    $export->dates = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_dates WHERE date >= '".$startdate."'");
+    $export->eventdays = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_eventdays WHERE date >= '".$startdate."'");
+    
+    header("Content-type: text/json");
+    header("Content-Disposition: attachment; filename=railtimetable.json");
+    header("Pragma: no-cache");
+    echo json_encode($export, JSON_PRETTY_PRINT);
+    exit;
+}
+
 
 function railtimetable_converttimes() {
     global $wpdb;
