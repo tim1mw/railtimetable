@@ -6,7 +6,7 @@
  * Description: The title says it all!
  * Author:      Tim Williams, AutoTrain (tmw@autotrain.org)
  * Author URI:  http://www.autotrain.org
- * Version:     0.0.1
+ * Version:     0.0.2
  * Text Domain: railtimetable
  * License:     GPL3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -133,7 +133,7 @@ function railtimetable_render_times($tmeta) {
         } else {
             $header = "";
         }
-        $text .= "<td style='font-weight:bold;font-size:x-small;background:#".$tmeta->background.";color:#".$tmeta->colour.";'>".$header."</td>";
+        $text .= "<td class='timetable-header-notes' style='background:#".$tmeta->background.";color:#".$tmeta->colour.";'>".$header."</td>";
     }
 
     $text.= "</tr>";
@@ -169,14 +169,14 @@ function railtimetable_ruleforcolumn($rules) {
 
     $r = "";
     if (count($not) > 0) {
-        $r .= __("Not")." ".implode(',<br />', $not);
+        $r .= __("Not", "railtimetable")." ".implode(',<br />', $not);
     }
 
     if (count($only) > 0) {
         if (strlen($r) > 0) {
             $r .= "<br />";
         }
-        $r .= __("Runs")." ".implode(', ', $only)."<br />";
+        $r .= __("Runs", "railtimetable")." ".implode(', ', $only)."<br />";
     }
 
     return $r;
@@ -186,9 +186,8 @@ function railtimetable_interpretstring($str) {
     $strl = strlen($str);
     switch ($strl) {
         case 1:
-            $days = array(false, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', );
-            $time = strtotime('last ' . $days[$str]);
-            return strftime('%A', $time);
+            $days = array(false, 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays', 'Sundays');
+            return __($days[$str], "railtimetable");
         case 8:
             $date = DateTime::createFromFormat("Ymd", $str);
             return strftime(get_option('railtimetable_date_format'), $date->getTimestamp());
@@ -515,7 +514,7 @@ function railtimetable_events($attr) {
         }
         $extra .= "</table>";
     } else {
-        $extra .= "<p class='timetable-smallheading timetable-special-front'>".__("No Upcoming Events")."</p>";
+        $extra .= "<p class='timetable-smallheading timetable-special-front'>".__("No Upcoming Events", "railtimetable")."</p>";
     }
 
     return $extra;
@@ -633,7 +632,17 @@ function railtimetable_style()
 }
 
 function railtimetable_load_textdomain() {
-    load_plugin_textdomain( 'railtimetable' ); 
+    //load_plugin_textdomain( 'railtimetable' ); 
+
+    $domain = 'railtimetable';
+    $locale = apply_filters( 'plugin_locale', get_locale(), $domain );
+
+    // wp-content/languages/your-plugin/your-plugin-de_DE.mo
+    load_textdomain( $domain, trailingslashit( WP_LANG_DIR ) . $domain . '/' . $domain . '-' . $locale . '.mo' );
+
+    // wp-content/plugins/your-plugin/languages/your-plugin-de_DE.mo
+    load_plugin_textdomain( $domain, FALSE, basename( dirname( __FILE__ ) ) . '/languages/' );
+
 
     if (function_exists('pll_register_string')) {
         global $wpdb;

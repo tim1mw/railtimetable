@@ -45,3 +45,43 @@ msgstr "Caewch"
 #
 msgid "Buy Tickets"
 msgstr "Prynu Tocynnau"
+
+#
+msgid "Mondays"
+msgstr "Dydd Llun"
+
+#
+msgid "Tuesdays"
+msgstr "Dydd Mawrth"
+
+#
+msgid "Wednesdays"
+msgstr "Dydd Mercher"
+
+#
+msgid "Thursdays"
+msgstr "Dydd Iau"
+
+#
+msgid "Fridays"
+msgstr "Dydd Gwener"
+
+#
+msgid "Saturdays"
+msgstr "Dydd Sadwrn"
+
+#
+msgid "Sundays"
+msgstr "Dydd Sul"
+
+#
+msgid "Not"
+msgstr "Ddim"
+
+#
+msgid "Runs"
+msgstr "Yn gweithredu"
+
+#
+msgid "No Upcoming Events"
+msgstr "Dim Digwyddiadau i Ddod"

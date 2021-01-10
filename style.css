@@ -207,3 +207,8 @@
    margin-bottom:1em;
    text-align:center;
 }
+
+.timetable-header-notes {
+    font-weight:bold;
+    font-size:x-small;
+}
