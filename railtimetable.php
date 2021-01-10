@@ -236,14 +236,14 @@ function railtimetable_times_thalf($stations, $dir, $timetable) {
         }
 
         if (count($timearrs) > 0) {
-            $text .= "<tr ".$class."><td title='".$station->description."'>".$station->name.$rs.$closed."</td>";
+            $text .= "<tr ".$class."><td title='".htmlspecialchars($station->description, ENT_QUOTES)."'>".$station->name.$rs.$closed."</td>";
             $text .= "<td>".__("arr", "railtimetable")."</td>";
             $text .= railtimetable_times_gettimes($timearrs);
             $text .= "</tr>";
         }
 
         if (count($timedeps) > 0) {
-            $text .= "<tr ".$class."><td title='".$station->description."'>".$station->name.$rs.$closed."</td>";
+            $text .= "<tr ".$class."><td title='".htmlspecialchars($station->description, ENT_QUOTES)."'>".$station->name.$rs.$closed."</td>";
             $text .= "<td>".__("dep", "railtimetable")."</td>";
             $text .= railtimetable_times_gettimes($timedeps);
             $text .= "</tr>";
@@ -318,14 +318,14 @@ function railtimetable_today($attr) {
         $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE {$wpdb->prefix}railtimetable_eventdays.date >= '".$now."'".$extra." ORDER BY {$wpdb->prefix}railtimetable_eventdays.date ASC LIMIT 1", OBJECT );
 
         if ($found_events) {
-            $linkfield = railtimetable_currentlangcode();
 
             $firstdate = false;
             for ($loop = 0; $loop < count($found_events); $loop++) {
-                $links = json_decode($found_events[$loop]->link);
                 $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
                 $date = strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp());
-                $html .= "<a class='timetable-special-front-head' href='".$links->$linkfield."'>".railtimetable_trans($found_events[$loop]->title)." - ".$date."</a><p>".railtimetable_trans($found_events[$loop]->description)."</p>";
+                $html .= "<a class='timetable-special-front-head' href='".railtimetable_get_lang_url($found_events[$loop])."'>".
+                    railtimetable_trans($found_events[$loop]->title)." - ".$date."</a><p>".
+                    railtimetable_trans($found_events[$loop]->description)."</p>";
             }
 
             if ($now == $tomorrow && $found_events[0]->date == $tomorrow) {
@@ -516,9 +516,6 @@ function railtimetable_events($attr) {
             $start = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
             $dates = array(strftime(get_option('railtimetable_date_format'), $start->getTimestamp()));
 
-            $linkfield = railtimetable_currentlangcode();
-            $links = json_decode($found_events[$loop]->link);
-
             for ($iloop=$loop+1; $iloop<count($found_events); $iloop++) {
                 if ($found_events[$loop]->id != $found_events[$iloop]->id) {
                     $loop = $iloop - 1;
@@ -530,7 +527,7 @@ function railtimetable_events($attr) {
             }
             $date = implode(', ', $dates);
 
-            $extra .= "<tr><td><a class='timetable-special-front' href='".$links->$linkfield."'> ".railtimetable_trans($found_events[$loop]->title)."</a></td><td>".$date."</td></tr>";
+            $extra .= "<tr><td><a class='timetable-special-front' href='".railtimetable_get_lang_url($found_events[$loop])."'> ".railtimetable_trans($found_events[$loop]->title)."</a></td><td>".$date."</td></tr>";
             $linecount ++;
 
             // If we have two events with the same ID at the end, we'll get a duplicate without this check.
@@ -570,9 +567,6 @@ function railtimetable_events_full($attr) {
             $evtdate = Datetime::createFromFormat('Y-m-d', $found_events[$loop]->date);
             $dates = array(strftime(get_option('railtimetable_date_format'), $evtdate->getTimestamp()));
 
-            $linkfield = railtimetable_currentlangcode();
-            $links = json_decode($found_events[$loop]->link);
-
             for ($iloop=$loop+1; $iloop<count($found_events); $iloop++) {
                 if ($found_events[$loop]->id != $found_events[$iloop]->id) {
                     $loop = $iloop - 1;
@@ -583,7 +577,7 @@ function railtimetable_events_full($attr) {
                 }
             }
             $date = implode(', ', $dates);
-            $extra .= "<tr><td><a class='timetable-special-front' href='".$links->$linkfield."'> ".railtimetable_trans($found_events[$loop]->title)."</a></td><td>".$date."</td></tr>";
+            $extra .= "<tr><td><a class='timetable-special-front' href='".railtimetable_get_lang_url($found_events[$loop])."'> ".railtimetable_trans($found_events[$loop]->title)."</a></td><td>".$date."</td></tr>";
 
             // If we have two events with the same ID at the end, we'll get a duplicate without this check.
             if ($iloop == count($found_events)) {
@@ -594,6 +588,17 @@ function railtimetable_events_full($attr) {
     }
 
     return $extra;
+}
+
+function railtimetable_get_lang_url($item) {
+    // Are we using an external URL?
+    if ($item->page == -1) {
+        return $item->link;
+    }
+    if (function_exists("pll_get_post")) {
+        return get_the_permalink(pll_get_post($item->page));
+    }
+    return get_the_permalink($item->page);
 }
 
 function railtimetable_events_buy($attrs) {
@@ -704,13 +709,11 @@ function railtimetable_popup() {
         $found_events = $wpdb->get_results("SELECT {$wpdb->prefix}railtimetable_eventdays.date, {$wpdb->prefix}railtimetable_eventdetails.* FROM {$wpdb->prefix}railtimetable_eventdays LEFT JOIN {$wpdb->prefix}railtimetable_eventdetails ON {$wpdb->prefix}railtimetable_eventdays.event = {$wpdb->prefix}railtimetable_eventdetails.id WHERE {$wpdb->prefix}railtimetable_eventdays.date = '".$date->format('Y-m-d')."'");
 
         $extra = "";
-        $linkfield = railtimetable_currentlangcode();
         $buylink = false;
         if ($found_events) {
             $extra .= "<div class='timetable-popupevent'><h5>".__("Special Event", "railtimetable").":<br />";
             for ($loop=0; $loop<count($found_events); $loop++) {
-                $links = json_decode($found_events[$loop]->link);
-                $extra .= "<a href='".$links->$linkfield."'>".railtimetable_trans($found_events[$loop]->title)."</a>";
+                $extra .= "<a href='".railtimetable_get_lang_url($found_events[$loop])."'>".railtimetable_trans($found_events[$loop]->title)."</a>";
                 if ($loop < count($found_events)-1) {
                     $extra .= " & ";
                 }
@@ -756,7 +759,8 @@ function get_buylink($buylink, $datestamp, $text = false, $class = 'timetable-bu
     return "<a class='".$class."' href='".$buylink."'>".$text."</a>";
 }
 
-// Method to disable lame emjoi substitution on WP core.
+// Method to disable lame emjoi substitution on WP core. WP Should not be making this decison for me and it's messing up
+// my use of symbols.
 function disable_wp_emojicons() {
 
   // all actions related to emojis
@@ -773,7 +777,6 @@ function disable_wp_emojicons() {
 }
 
 add_action( 'init', 'disable_wp_emojicons' );
-
 
 add_shortcode('railtimetable_show', 'railtimetable_show');
 add_shortcode('railtimetable_times', 'railtimetable_times');

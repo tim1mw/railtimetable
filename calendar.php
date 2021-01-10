@@ -135,9 +135,7 @@ class Calendar
                 $calendar .= '</a>';
             } else {
                 if ($specials) {
-                    $linkfield = railtimetable_currentlangcode();
-                    $links = json_decode(end($specials)->link);
-                    $calendar .= "<a style='".$style."'  href=\"".$links->$linkfield."\">";
+                    $calendar .= "<a style='".$style."'  href=\"".railtimetable_get_lang_url(end($specials))."\">";
                     $calendar .= $running_day->format('j');
                     $calendar .= '</a>';
                 } else {

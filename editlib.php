@@ -6,6 +6,12 @@ defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 add_action('admin_menu', 'railtimetable_add_pages');
 add_action('admin_init', 'railtimetable_register_settings' );
 
+// These filters try to replace charaters in submitted text disable them. WP should not be deciding to do this by default.
+remove_filter( 'the_title', 'wptexturize' );
+remove_filter( 'the_content', 'wptexturize' );
+remove_filter( 'the_excerpt', 'wptexturize' );
+remove_filter( 'comment_text', 'wptexturize' );
+
 // action function for above hook
 function railtimetable_add_pages() {
     // Add a new top-level menu (ill-advised):
@@ -208,8 +214,8 @@ function railtimetable_edit_stations() {
 
         echo "<tr>".
             "<td>".($stations[$loop]->sequence+1).
-            ": <input type='text' name='station_name_".$stations[$loop]->id."' size='25' value='".$stations[$loop]->name."' /></td>".
-            "<td><input type='text' name='station_description_".$stations[$loop]->id."' size='50' value='".$stations[$loop]->description."' /></td>".
+            ": <input type='text' name='station_name_".$stations[$loop]->id."' size='25' value='".htmlspecialchars($stations[$loop]->name, ENT_QUOTES)."' /></td>".
+            "<td><input type='text' name='station_description_".$stations[$loop]->id."' size='50' value='".htmlspecialchars($stations[$loop]->description, ENT_QUOTES)."' /></td>".
             "<td><input type='checkbox' name='station_requeststop_".$stations[$loop]->id."' value='1' ".$rs." /></td>".
             "<td><input type='checkbox' name='station_closed_".$stations[$loop]->id."' value='1' ".$closed." /></td>".
             "<td><input type='checkbox' name='station_hidden_".$stations[$loop]->id."' value='1' ".$hidden." /></td>".
@@ -278,11 +284,11 @@ function railtimetable_updatestations() {
         $closed = railtimetable_get_cbval('station_closed_'.$id);
 
         $params = array(
-            'name' => sanitize_text_field($_POST['station_name_'.$id]),
+            'name' => sanitize_text_field(stripslashes($_POST['station_name_'.$id])),
             'hidden' => $hidden,
             'requeststop' => $rs,
             'closed' => $closed,
-            'description' => sanitize_text_field($_POST['station_description_'.$id]));
+            'description' => sanitize_textarea_field(stripslashes($_POST['station_description_'.$id])));
 
         if (array_key_exists('station_move_'.$id, $_POST)) {
             $inc = intval($_POST['station_move_'.$id]);
@@ -300,8 +306,8 @@ function railtimetable_updatestations() {
         $closed = railtimetable_get_cbval('station_closed_new');
 
         $wpdb->insert($wpdb->prefix.'railtimetable_stations',
-            array('name' => $stnnew, 
-            'description' => trim(sanitize_text_field($_POST['station_description_new'])), 
+            array('name' => stripslashes($stnnew), 
+            'description' => trim(sanitize_text_field(stripslashes($_POST['station_description_new']))), 
             'hidden' =>  $hidden,
             'requeststop' => $rs,
             'closed' => $closed,
@@ -696,21 +702,19 @@ function railtimetable_edit_events() {
     if (array_key_exists('action', $_POST)) {
         if ($_POST['action'] == 'editevent') {
             $langs = railtimetable_alllangcode();
-            $links = array();
-            foreach ($langs as $lang) {
-                $links[$lang] = sanitize_text_field($_POST["link_".$lang]);
-            }
 
             if (railtimetable_get_cbval('custombackcolour')) {
                 $background = substr(trim(sanitize_text_field($_POST['background'])), 1);
             } else {
                 $background = '';
             }
-            $linksjson = json_encode($links);
+
             $params = array(
-                'title' => sanitize_text_field($_POST['title']),
-                'description' => sanitize_text_field($_POST['desc']),
-                'link' => $linksjson, 'background' => $background,
+                'title' => sanitize_text_field(stripslashes($_POST['title'])),
+                'description' => sanitize_text_field(stripslashes($_POST['desc'])),
+                'page' => sanitize_text_field($_POST['page']),
+                'link' => sanitize_text_field($_POST['link']),
+                'background' => $background,
                 'colour' => substr(trim(sanitize_text_field($_POST['colour'])),1),
                 'buylink' => trim(sanitize_text_field($_POST['buylink'])));
             $id = intval($_POST['id']);
@@ -728,7 +732,7 @@ function railtimetable_edit_events() {
         $edit = sanitize_text_field($_POST['edit']);
         $evt = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}railtimetable_eventdetails WHERE id='".$edit."' ");
         echo "<h2>Update Event</h2>";
-        railtimetable_edit_event($edit, $evt->title, $evt->description, $evt->link, $evt->background, $evt->colour, $evt->buylink, $button="Update Event");
+        railtimetable_edit_event($edit, $evt->title, $evt->description, $evt->link, $evt->background, $evt->colour, $evt->buylink, $evt->page, $button="Update Event");
         return;
     }
 
@@ -786,7 +790,7 @@ function railtimetable_edit_events() {
     railtimetable_edit_event();
 }
 
-function railtimetable_edit_event($id=-1, $title="", $desc="", $linkjson="", $bg = "", $colour = "000000", $buylink = "", $button="Add Event") {
+function railtimetable_edit_event($id=-1, $title="", $desc="", $link="", $bg = "", $colour = "000000", $buylink = "", $page = -1, $button="Add Event") {
     ?>
     <form method='post' action=''>
         <input type='hidden' name='action' value='editevent' />
@@ -795,26 +799,16 @@ function railtimetable_edit_event($id=-1, $title="", $desc="", $linkjson="", $bg
             <td>Title</td>
             <td><input type='text' name='title' size='50' value='<?php echo htmlspecialchars($title, ENT_QUOTES); ?>' /></td>
         </tr><tr>
-            <td>Description</td>
+            <td style='vertical-align:top'>Description</td>
             <td><textarea name='desc' cols='80' rows='5'><?php echo htmlspecialchars($desc, ENT_QUOTES); ?></textarea></td>
-        </tr><?php
-            if (strlen($linkjson) > 0) {
-                $links = json_decode($linkjson);
-            } else {
-                $langs = railtimetable_alllangcode();
-                $links = array();
-                foreach ($langs as $lang) {
-                    $links[$lang] = '';
-                }
-            }
-
-            foreach ($links as $linklang => $linkvalue) {
-                echo "<tr>\n<td>Link ".$linklang."</td>\n".
-                    "<td><input type='text' size='80' value='".$linkvalue."' name='link_".$linklang."' /></td>".
-                    "</tr>";
-            }
-
-        ?>
+        </tr>
+            <td style='vertical-align:top'>Page or URL</td>
+            <td><?php
+            wp_dropdown_pages(
+                array('name' => 'page', 'selected' => $page,
+                      'show_option_none' => __('None or External URL'), 'option_none_value' => -1)); ?><br />
+            <input type="text" name="link" value="<?php echo esc_attr($link); ?>" size="60" />
+            </td>
        <tr>
             <td>Text colour</td>
             <td><input type='color' name='colour' value='#<?php echo htmlspecialchars($colour); ?>' /></td>
