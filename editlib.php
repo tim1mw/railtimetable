@@ -626,7 +626,7 @@ function railtimetable_get_updatetimes($key, $totaltrains) {
     return json_encode($strs);
 }
 
-function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $colour = "", $totaltrains = 1, $notes = "", $buylink="", $hidden=0, $button="Add Timetable") {
+function railtimetable_edit_timetable($id=-1, $timetable="", $background ="666666", $colour = "ffffff", $totaltrains = 1, $notes = "", $buylink="", $hidden=0, $button="Add Timetable") {
     ?>
     <form method='post' action=''>
         <input type='hidden' name='action' value='railtimetable-edittimetable' />
@@ -651,10 +651,10 @@ function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $c
             <td><textarea name='html' cols='80' rows='3'><?php echo htmlspecialchars($notes, ENT_QUOTES); ?></textarea></td>
         </tr><tr>
             <td>Background colour</td>
-            <td><input type='text' name='background' size='6' value='<?php echo htmlspecialchars($background); ?>' /></td>
+            <td><input type='color' name='background' size='6' value='#<?php echo htmlspecialchars($background); ?>' /></td>
         </tr><tr>
             <td>Text colour</td>
-            <td><input type='text' name='colour' size='6' value='<?php echo htmlspecialchars($colour); ?>' /></td>
+            <td><input type='color' name='colour' size='6' value='#<?php echo htmlspecialchars($colour); ?>' /></td>
         </tr><tr>
             <td>Hidden</td>
             <td><input type='checkbox' name='hidden' value='1' <?php if ($hidden == 1) {echo "checked";} ?>/> (note, only hides in "all timetables" display, will still be shown on calendar where set)</td>
@@ -673,11 +673,12 @@ function railtimetable_edit_timetable($id=-1, $timetable="", $background ="", $c
 
 function railtimetable_updatetimetable() {
     global $wpdb;
+
     $hidden = railtimetable_get_cbval('hidden');
     $params = array('timetable' => strtolower(sanitize_text_field($_POST['timetable'])),
         'html' => sanitize_textarea_field($_POST['html']),
-        'background' => trim(sanitize_text_field($_POST['background'])),
-        'colour' => trim(sanitize_text_field($_POST['colour'])),
+        'background' => substr(trim(sanitize_text_field($_POST['background'])), 1),
+        'colour' => substr(trim(sanitize_text_field($_POST['colour'])),1),
         'totaltrains' => intval($_POST['totaltrains']),
         'hidden' => $hidden,
         'buylink' => trim(sanitize_text_field($_POST['buylink'])));
