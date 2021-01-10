@@ -212,3 +212,15 @@
     font-weight:bold;
     font-size:x-small;
 }
+
+.timetable-station-closed {
+    color:red;
+    font-weight:lighter;
+    text-decoration: line-through;
+}
+
+.timetable-station-closedtext {
+    display: inline-block;
+    text-decoration: none;
+    font-size:small;
+}

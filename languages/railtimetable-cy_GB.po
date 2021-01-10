@@ -85,3 +85,11 @@ msgstr "Yn gweithredu"
 #
 msgid "No Upcoming Events"
 msgstr "Dim Digwyddiadau i Ddod"
+
+#
+msgid "Request Stop"
+msgstr "Gofyn Stop"
+
+#
+msgid "Closed"
+msgstr "Ar gau"

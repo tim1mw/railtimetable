@@ -121,7 +121,7 @@ function railtimetable_times($attr) {
 
 function railtimetable_render_times($tmeta) {
     global $wpdb;
-    $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
+    $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations WHERE hidden = 0 ORDER BY sequence ASC");
     $text = "<div class='timetable-wrapper'><table style='margin-left:auto;margin-right:auto;'>";
 
     $text .= "<tr><td class='timetable-header' style='background:#".$tmeta->background.";color:#".$tmeta->colour.";' colspan='2'>".__("Timetable", "railtimetable").":&nbsp;".railtimetable_trans($tmeta->timetable)."</td>";
@@ -146,6 +146,11 @@ function railtimetable_render_times($tmeta) {
 
     if (strlen($tmeta->html) > 0) {
         $text .= railtimetable_trans($tmeta->html);
+    }
+
+    $rqstations = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}railtimetable_stations WHERE hidden = 0 AND requeststop = 1");
+    if ($rqstations > 0) {
+        $text .= "&#x271D; ".__('Request Stop', 'railtimetable');
     }
 
     $text .= "</div>";
@@ -211,15 +216,28 @@ function railtimetable_times_thalf($stations, $dir, $timetable) {
         $timearrs = json_decode($times[0]->$keyarrs);
         $timedeps = json_decode($times[0]->$keydeps);
 
+        if ($station->requeststop == 1) {
+            $rs = '&nbsp;<sup>&#x271D</sup>';
+        } else {
+            $rs = '';
+        }
+        if ($station->closed == 1) {
+            $class = " class='timetable-station-closed'";
+            $closed = "<span class='timetable-station-closedtext'>&nbsp;(".__('Closed', 'railtimetable').")</span>";
+        } else {
+            $class = "";
+            $closed = "";
+        }
+
         if (count($timearrs) > 0) {
-            $text .= "<tr><td>".$station->name."</td>";
+            $text .= "<tr ".$class."><td title='".$station->description."'>".$station->name.$rs.$closed."</td>";
             $text .= "<td>".__("arr", "railtimetable")."</td>";
             $text .= railtimetable_times_gettimes($timearrs);
             $text .= "</tr>";
         }
 
         if (count($timedeps) > 0) {
-            $text .= "<tr><td>".$station->name."</td>";
+            $text .= "<tr ".$class."><td title='".$station->description."'>".$station->name.$rs.$closed."</td>";
             $text .= "<td>".__("dep", "railtimetable")."</td>";
             $text .= railtimetable_times_gettimes($timedeps);
             $text .= "</tr>";
@@ -331,21 +349,22 @@ function railtimetable_today($attr) {
     $nextd = new DateTime($times[0]->date);
     $nextds = strftime(get_option('railtimetable_date_format'), $nextd->getTimestamp());
     $adate = null;
-
+    $heading = "";
+    
     if ($now == $tomorrow && $times[0]->date == $tomorrow) {
-        $heading .= __("Tomorrow's Trains", "railtimetable");
+        $heading = __("Tomorrow's Trains", "railtimetable");
         $adate = $tomorrow;
     }
     elseif ($times[0]->date == $now) {
-        $heading .= __("Today's Trains", "railtimetable");
+        $heading = __("Today's Trains", "railtimetable");
         $adate = $now;
     }
     else {
         if ($nextd->format('Y-m-d') == $tomorrow) {
-            $heading .= __("Tomorrow's Trains", "railtimetable");
+            $heading = __("Tomorrow's Trains", "railtimetable");
             $adate = $tomorrow;
         } else {
-            $heading .= __("Next trains on", "railtimetable")." ".$nextds;
+            $heading = __("Next trains on", "railtimetable")." ".$nextds;
             $adate = $nextds;
         }
     }
@@ -365,7 +384,7 @@ function railtimetable_smalltimetable($times, $heading, $fordate, $extra = "", $
 
     $fmt = get_option('railtimetable_time_format');
     foreach ($times as $time) {
-        $html .= "<tr><td class='next-trains-cell' ".$style.">".$time->name."</td><td class='next-trains-cell' ".$style.">";
+        $html .= "<tr><td class='next-trains-cell' ".$style." title='".$time->description."'>".$time->name."</td><td class='next-trains-cell' ".$style.">";
         $updeps = railtimetable_processtimes($time->up_deps, $time->colsmeta, $fordate);
         if (count($updeps) > 0) {
             $str = "";
@@ -456,7 +475,8 @@ function railtimetable_timesforstation($station, $stationfield, $date, $datesele
         "wp_railtimetable_timetables.colsmeta, ".
         "wp_railtimetable_stntimes.up_deps, ".
         "wp_railtimetable_stntimes.down_deps, ".
-        "wp_railtimetable_stations.name ".
+        "wp_railtimetable_stations.name, ".
+        "wp_railtimetable_stations.description ".
         "FROM `wp_railtimetable_dates` ".
         "LEFT JOIN wp_railtimetable_timetables ON wp_railtimetable_dates.timetableid =  wp_railtimetable_timetables.id ".
         "LEFT JOIN wp_railtimetable_stntimes ON wp_railtimetable_timetables.id = wp_railtimetable_stntimes.timetableid ".
@@ -695,10 +715,11 @@ function railtimetable_popup() {
             $extra .= "</h5></div>";
         }
 
-        // Get the first station
-        $numstations = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
-        $first = railtimetable_timesforstation(0, "sequence", $date->format('Y-m-d'), "=");
-        $last = railtimetable_timesforstation($numstations - 1, "sequence", $date->format('Y-m-d'), "=");
+        // Get the first and last stations
+        $firstid = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}railtimetable_stations WHERE hidden = 0 AND closed = 0 ORDER BY sequence ASC LIMIT 1");
+        $lastid = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}railtimetable_stations WHERE hidden = 0 AND closed = 0 ORDER BY sequence DESC LIMIT 1");
+        $first = railtimetable_timesforstation($firstid, "sequence", $date->format('Y-m-d'), "=");
+        $last = railtimetable_timesforstation($lastid, "id", $date->format('Y-m-d'), "=");
         if (!$buylink) {
             if (strlen($first[0]->buylink) >0) {
                 $buylink = get_buylink($first[0]->buylink, $date->getTimestamp());
@@ -728,6 +749,24 @@ function get_buylink($buylink, $datestamp, $text = false, $class = 'timetable-bu
 
     return "<a class='".$class."' href='".$buylink."'>".$text."</a>";
 }
+
+// Method to disable lame emjoi substitution on WP core.
+function disable_wp_emojicons() {
+
+  // all actions related to emojis
+  remove_action( 'admin_print_styles', 'print_emoji_styles' );
+  remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
+  remove_action( 'admin_print_scripts', 'print_emoji_detection_script' );
+  remove_action( 'wp_print_styles', 'print_emoji_styles' );
+  remove_filter( 'wp_mail', 'wp_staticize_emoji_for_email' );
+  remove_filter( 'the_content_feed', 'wp_staticize_emoji' );
+  remove_filter( 'comment_text_rss', 'wp_staticize_emoji' );
+
+  // filter to remove TinyMCE emojis
+  add_filter( 'tiny_mce_plugins', 'disable_emojicons_tinymce' );
+}
+
+add_action( 'init', 'disable_wp_emojicons' );
 
 
 add_shortcode('railtimetable_show', 'railtimetable_show');

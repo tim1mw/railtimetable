@@ -142,17 +142,36 @@ function railtimetable_edit_stations() {
     <form method='post' action='<?php echo esc_url( admin_url('admin-post.php') ); ?>'>
     <input type='hidden' name='action' value='railtimetable-editstations' />
     <input type="hidden" name="railtimetable-nonce" value="<?php echo $nonce ?>" />
-    <table><tr><th>Station</th><th>Description</th><th>Actions</th><tr>
+    <table><tr><th>Station</th><th>Description</th><th>Request<br />Stop</th><th>Closed</th><th>Hidden</th><th>Actions</th><tr>
     <?php
     $ids = array();
     $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
     $count = count($stations);
     for ($loop = 0; $loop < $count; $loop++) {
         $ids[] = $stations[$loop]->id;
+        if ($stations[$loop]->hidden == 1) {
+            $hidden = 'checked';
+        } else {
+            $hidden = '';
+        }
+        if ($stations[$loop]->requeststop == 1) {
+            $rs = 'checked';
+        } else {
+            $rs = '';
+        }
+        if ($stations[$loop]->closed == 1) {
+            $closed = 'checked';
+        } else {
+            $closed = '';
+        }
+
         echo "<tr>".
             "<td>".($stations[$loop]->sequence+1).
             ": <input type='text' name='station_name_".$stations[$loop]->id."' size='25' value='".$stations[$loop]->name."' /></td>".
             "<td><input type='text' name='station_description_".$stations[$loop]->id."' size='50' value='".$stations[$loop]->description."' /></td>".
+            "<td><input type='checkbox' name='station_requeststop_".$stations[$loop]->id."' value='1' ".$rs." /></td>".
+            "<td><input type='checkbox' name='station_closed_".$stations[$loop]->id."' value='1' ".$closed." /></td>".
+            "<td><input type='checkbox' name='station_hidden_".$stations[$loop]->id."' value='1' ".$hidden." /></td>".
             "<td>";
 
         echo "<button name='station_del_".$stations[$loop]->id."' value='1'>X</button>&nbsp;&nbsp;";
@@ -174,6 +193,9 @@ function railtimetable_edit_stations() {
     <tr>
         <td><input type='text' size='25' name='station_name_new' value='' /></td>
         <td><input type='text' size='50' name='station_description_new' value='' /></td>
+        <td><input type='checkbox' name='station_requeststop_new' value='1' /></td>
+        <td><input type='checkbox' name='station_closed_new' value='1' /></td>
+        <td><input type='checkbox' name='station_hidden_new' value='1' /></td>
         <td></td>
     </tr>
     </table>
@@ -210,7 +232,16 @@ function railtimetable_updatestations() {
             continue;
         }
 
-        $params = array('name' => sanitize_text_field($_POST['station_name_'.$id]), 'description' => sanitize_text_field($_POST['station_description_'.$id]));
+        $hidden = railtimetable_get_cbval('station_hidden_'.$id);
+        $rs = railtimetable_get_cbval('station_requeststop_'.$id);
+        $closed = railtimetable_get_cbval('station_closed_'.$id);
+
+        $params = array(
+            'name' => sanitize_text_field($_POST['station_name_'.$id]),
+            'hidden' => $hidden,
+            'requeststop' => $rs,
+            'closed' => $closed,
+            'description' => sanitize_text_field($_POST['station_description_'.$id]));
 
         if (array_key_exists('station_move_'.$id, $_POST)) {
             $inc = intval($_POST['station_move_'.$id]);
@@ -223,14 +254,29 @@ function railtimetable_updatestations() {
     }
     $stnnew = trim(sanitize_text_field($_POST['station_name_new']));
     if (strlen($stnnew) > 0) {
+        $hidden = railtimetable_get_cbval('station_hidden_new');
+        $rs = railtimetable_get_cbval('station_requeststop_new');
+        $closed = railtimetable_get_cbval('station_closed_new');
+
         $wpdb->insert($wpdb->prefix.'railtimetable_stations',
             array('name' => $stnnew, 
             'description' => trim(sanitize_text_field($_POST['station_description_new'])), 
+            'hidden' =>  $hidden,
+            'requeststop' => $rs,
+            'closed' => $closed,
             'sequence' => count($ids)));
     }
 
     wp_redirect(site_url().'/wp-admin/admin.php?page=railtimetable-edit-stations');
     exit;
+}
+
+function railtimetable_get_cbval($cbname) {
+    if (array_key_exists($cbname, $_POST)) {
+        return sanitize_text_field($_POST[$cbname]);
+    } else {
+        return 0;
+    }
 }
 
 function railtimetable_edit_timetables() {
