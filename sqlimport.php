@@ -11,7 +11,7 @@ CREATE TABLE {$wpdb->prefix}railtimetable_dates (
   date date NOT NULL,
   PRIMARY KEY (id),
   KEY date_index (date)
-);
+)
 ".$charset_collate;
 
 $sql[] = "
@@ -21,7 +21,7 @@ CREATE TABLE {$wpdb->prefix}railtimetable_eventdays (
   event int(11) NOT NULL,
   PRIMARY KEY (id),
   KEY event_index (date)
-);
+)
 ".$charset_collate;
 
 $sql[] = "
@@ -35,7 +35,7 @@ CREATE TABLE {$wpdb->prefix}railtimetable_eventdetails (
   background varchar(6) NOT NULL,
   colour varchar(6) NOT NULL,
   PRIMARY KEY (id)
-);
+)
 ".$charset_collate;
 
 $sql[] = "
@@ -49,7 +49,7 @@ CREATE TABLE {$wpdb->prefix}railtimetable_stations (
   hidden int(11) NOT NULL,
   PRIMARY KEY (id),
   KEY sequence (sequence)
-);
+)
 ".$charset_collate;
 
 $sql[] = "
@@ -63,7 +63,7 @@ CREATE TABLE {$wpdb->prefix}railtimetable_stntimes (
   up_arrs text NOT NULL,
   PRIMARY KEY (id),
   KEY timetable (timetableid)
-);
+)
 ".$charset_collate;
 
 
@@ -80,7 +80,7 @@ CREATE TABLE {$wpdb->prefix}railtimetable_timetables (
   hidden int(1) NOT NULL,
   PRIMARY KEY (id),
   KEY timetable (timetable)
-);
+)
 ".$charset_collate;
 
 
