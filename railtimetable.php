@@ -20,6 +20,7 @@ require_once('editlib.php');
 
 // Install the DB
 register_activation_hook( __FILE__, 'railtimetable_create_db' );
+add_action( 'upgrader_process_complete', 'railtimetable_create_db', 10, 2 );
 
 function railtimetable_currentlang() {
     if (function_exists("pll_current_language")) {
