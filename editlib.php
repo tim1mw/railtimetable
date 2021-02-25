@@ -270,7 +270,7 @@ function railtimetable_edit_stations() {
     <form method='post' action='<?php echo esc_url( admin_url('admin-post.php') ); ?>'>
     <input type='hidden' name='action' value='railtimetable-editstations' />
     <input type="hidden" name="railtimetable-nonce" value="<?php echo $nonce ?>" />
-    <table><tr><th>Station</th><th>Description</th><th>Request<br />Stop</th><th>Closed</th><th>Hidden</th><th>Actions</th><tr>
+    <table><tr><th>Station</th><th>Description</th><th>Principal<br />Station</th><th>Request<br />Stop</th><th>Closed</th><th>Hidden</th><th>Actions</th><tr>
     <?php
     $ids = array();
     $stations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}railtimetable_stations ORDER BY sequence ASC");
@@ -292,11 +292,17 @@ function railtimetable_edit_stations() {
         } else {
             $closed = '';
         }
+        if ($stations[$loop]->principal == 1) {
+            $principal = 'checked';
+        } else {
+            $principal = '';
+        }
 
         echo "<tr>".
             "<td>".($stations[$loop]->sequence+1).
             ": <input type='text' name='station_name_".$stations[$loop]->id."' size='25' value='".htmlspecialchars($stations[$loop]->name, ENT_QUOTES)."' /></td>".
             "<td><input type='text' name='station_description_".$stations[$loop]->id."' size='50' value='".htmlspecialchars($stations[$loop]->description, ENT_QUOTES)."' /></td>".
+            "<td><input type='checkbox' name='station_principal_".$stations[$loop]->id."' value='1' ".$principal." /></td>".
             "<td><input type='checkbox' name='station_requeststop_".$stations[$loop]->id."' value='1' ".$rs." /></td>".
             "<td><input type='checkbox' name='station_closed_".$stations[$loop]->id."' value='1' ".$closed." /></td>".
             "<td><input type='checkbox' name='station_hidden_".$stations[$loop]->id."' value='1' ".$hidden." /></td>".
@@ -321,6 +327,7 @@ function railtimetable_edit_stations() {
     <tr>
         <td><input type='text' size='25' name='station_name_new' value='' /></td>
         <td><input type='text' size='50' name='station_description_new' value='' /></td>
+        <td><input type='checkbox' name='station_principal_new' value='1' /></td>
         <td><input type='checkbox' name='station_requeststop_new' value='1' /></td>
         <td><input type='checkbox' name='station_closed_new' value='1' /></td>
         <td><input type='checkbox' name='station_hidden_new' value='1' /></td>
@@ -360,6 +367,7 @@ function railtimetable_updatestations() {
             continue;
         }
 
+        $principal = railtimetable_get_cbval('station_principal_'.$id);
         $hidden = railtimetable_get_cbval('station_hidden_'.$id);
         $rs = railtimetable_get_cbval('station_requeststop_'.$id);
         $closed = railtimetable_get_cbval('station_closed_'.$id);
@@ -367,6 +375,7 @@ function railtimetable_updatestations() {
         $params = array(
             'name' => sanitize_text_field(stripslashes($_POST['station_name_'.$id])),
             'hidden' => $hidden,
+            'principal' => $principal,
             'requeststop' => $rs,
             'closed' => $closed,
             'description' => sanitize_textarea_field(stripslashes($_POST['station_description_'.$id])));
@@ -390,6 +399,7 @@ function railtimetable_updatestations() {
             array('name' => stripslashes($stnnew), 
             'description' => trim(sanitize_text_field(stripslashes($_POST['station_description_new']))), 
             'hidden' =>  $hidden,
+            'principal' => $principal,
             'requeststop' => $rs,
             'closed' => $closed,
             'sequence' => count($ids)));
