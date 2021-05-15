@@ -309,7 +309,7 @@ function railtimetable_today($attr) {
     $hour->setTimezone($timezone);
     $hour = $hour->format('H');
 
-    if ($hour > 18) {
+    if ($hour >= 18) {
         $now = $tomorrow;
     }
 
@@ -525,7 +525,7 @@ function railtimetable_events($attr) {
     $hour = $hour->format('H');
 
     // If it's after 18:00 then visitors probably want the next event.
-    if ($hour > 18) {
+    if ($hour >= 18) {
         $datetime = new DateTime('tomorrow');
         $now = $datetime->format('Y-m-d');
     }
