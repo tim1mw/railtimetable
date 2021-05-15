@@ -433,6 +433,9 @@ function railtimetable_processtimes($times, $colsmeta, $date) {
     $meta = json_decode($colsmeta);
     $times = json_decode($times);
     $count = 0;
+    if (get_class($date) != 'DateTime') {
+        $date = DateTime::createFromFormat("Y-m-d", $date);
+    }
 
     foreach ($times as $time) {
         $rules = $meta[$count]->rules;
