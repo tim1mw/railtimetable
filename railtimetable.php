@@ -296,12 +296,20 @@ function railtimetable_today($attr) {
 
     $stations = explode(',', $attr['stations']);
     $times = array();
-    $now = date("Y-m-d");
+    $timezone = new \DateTimeZone(get_option('timezone_string'));
+    $now = new DateTime();
+    $now->setTimezone($timezone);
+    $now = $now->format("Y-m-d");
     $datetime = new DateTime('tomorrow');
+    $datetime->setTimezone($timezone);
     $tomorrow = $datetime->format('Y-m-d');
 
-    // If it's after 17:00 then visitors probably want tomorrows train times.
-    if (date('H') > 20) {
+    // If it's after 18:00 then visitors probably want tomorrows train times.
+    $hour = new DateTime();
+    $hour->setTimezone($timezone);
+    $hour = $hour->format('H');
+
+    if ($hour > 18) {
         $now = $tomorrow;
     }
 
@@ -509,9 +517,15 @@ function railtimetable_events($attr) {
     global $wpdb;
     railtimetable_setlangage();
     $now = date("Y-m-d");
+    $now = new DateTime();
+    $now->setTimezone($timezone);
+    $now = $now->format("Y-m-d");
+    $hour = new DateTime();
+    $hour->setTimezone($timezone);
+    $hour = $hour->format('H');
 
-    // If it's after 19:00 then visitors probably want the next event.
-    if (date('H') > 19) {
+    // If it's after 18:00 then visitors probably want the next event.
+    if ($hour > 18) {
         $datetime = new DateTime('tomorrow');
         $now = $datetime->format('Y-m-d');
     }
