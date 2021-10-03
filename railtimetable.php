@@ -385,7 +385,7 @@ function railtimetable_today($attr) {
             $heading = __("Tomorrow's Trains", "railtimetable");
             $adate = $tomorrow;
         } else {
-            $heading = __("Next trains on", "railtimetable")." ".$nextds;
+            $heading = __("Next Trains", "railtimetable")." ".$nextds;
             $adate = $nextds;
         }
     }
