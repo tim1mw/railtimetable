@@ -1,95 +1,140 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-10-03 18:12+0000\n"
+"PO-Revision-Date: 2021-10-03 18:13+0000\n"
+"Last-Translator: \n"
+"Language-Team: Welsh (United Kingdom)\n"
+"Language: cy_GB\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n==3 ? 3 : "
+"n==6 ? 4 : 5;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/"
+
 # Arrival abbreviation
+#: railtimetable.php:247
 msgid "arr"
 msgstr "cyr"
 
-# departure abbreviation
-msgid "dep"
-msgstr "gad"
-
-# Timetable
-msgid "Timetable"
-msgstr "Amserlen"
-
-#
-msgid "Today's Trains"
-msgstr "Trenau Heddiw"
-
-#
-msgid "Tomorrow's Trains"
-msgstr "Trenau Yfory"
-
-#
-msgid "Next Trains"
-msgstr "Trenau nesaf ar"
-
-#
-msgid "Timetable for"
-msgstr "Amserlen ar gyfer"
-
-#
-msgid "Special Event"
-msgstr "Digwyddiadau Arbennig"
-
-#
-msgid "No trains tomorrow"
-msgstr "Dim Trenau Yfory"
-
-#
-msgid "No trains today"
-msgstr "Dim Trenau Heddiw"
-
-#
-msgid "Close"
-msgstr "Caewch"
-
-#
+#: railtimetable.php:772
 msgid "Buy Tickets"
 msgstr "Prynu Tocynnau"
 
-#
-msgid "Mondays"
-msgstr "Dydd Llun"
+#: railtimetable.php:85
+msgid "Close"
+msgstr "Caewch"
 
-#
-msgid "Tuesdays"
-msgstr "Dydd Mawrth"
+#: railtimetable.php:239
+msgid "Closed"
+msgstr "Ar gau"
 
-#
-msgid "Wednesdays"
-msgstr "Dydd Mercher"
+# departure abbreviation
+#: railtimetable.php:254
+msgid "dep"
+msgstr "gad"
 
-#
-msgid "Thursdays"
-msgstr "Dydd Iau"
+#: editlib.php:26
+msgid "Edit Calendar"
+msgstr ""
 
-#
-msgid "Fridays"
-msgstr "Dydd Gwener"
+#: editlib.php:24
+msgid "Edit Events"
+msgstr ""
 
-#
-msgid "Saturdays"
-msgstr "Dydd Sadwrn"
+#: editlib.php:20
+msgid "Edit Stations"
+msgstr ""
 
-#
-msgid "Sundays"
-msgstr "Dydd Sul"
+#: editlib.php:22
+msgid "Edit Timetables"
+msgstr ""
 
-#
-msgid "Not"
-msgstr "Ddim"
+#: editlib.php:51 editlib.php:57
+msgid "Error"
+msgstr ""
 
-#
-msgid "Runs"
-msgstr "Yn gweithredu"
+#: railtimetable.php:123
+msgid "Error: Unknown timetable"
+msgstr ""
 
-#
+#. Name of the plugin
+msgid "Heritage Railway Timetable"
+msgstr ""
+
+#. URI of the plugin
+#. Author URI of the plugin
+msgid "http://www.autotrain.org"
+msgstr ""
+
+#: editlib.php:57
+msgid "Invalid nonce specified"
+msgstr ""
+
+#: editlib.php:51
+msgid "Missing nonce"
+msgstr ""
+
+#: railtimetable.php:355 railtimetable.php:388
+msgid "Next Trains"
+msgstr "Trenau nesaf ar"
+
+#: railtimetable.php:366
+msgid "No trains today"
+msgstr "Dim Trenau Heddiw"
+
+#: railtimetable.php:364
+msgid "No trains tomorrow"
+msgstr "Dim Trenau Yfory"
+
+#: railtimetable.php:564
 msgid "No Upcoming Events"
 msgstr "Dim Digwyddiadau i Ddod"
 
-#
+#: railtimetable.php:190
+msgid "Not"
+msgstr "Ddim"
+
+#: editlib.php:18
+msgid "Rail Timetable"
+msgstr ""
+
+#: railtimetable.php:166
 msgid "Request Stop"
 msgstr "Gofyn Stop"
 
-#
-msgid "Closed"
-msgstr "Ar gau"
+#: railtimetable.php:197
+msgid "Runs"
+msgstr "Yn gweithredu"
+
+#: railtimetable.php:738
+msgid "Special Event"
+msgstr "Digwyddiadau Arbennig"
+
+#. Description of the plugin
+msgid "The title says it all!"
+msgstr ""
+
+#. Author of the plugin
+msgid "Tim Williams, AutoTrain (tmw@autotrain.org)"
+msgstr ""
+
+# Timetable
+#: railtimetable.php:134 railtimetable.php:404
+msgid "Timetable"
+msgstr "Amserlen"
+
+#: railtimetable.php:762
+msgid "Timetable for"
+msgstr "Amserlen ar gyfer"
+
+#: railtimetable.php:350 railtimetable.php:380
+msgid "Today's Trains"
+msgstr "Trenau Heddiw"
+
+#: railtimetable.php:347 railtimetable.php:353 railtimetable.php:376
+#: railtimetable.php:385
+msgid "Tomorrow's Trains"
+msgstr "Trenau Yfory"
