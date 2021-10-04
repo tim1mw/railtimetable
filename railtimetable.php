@@ -430,7 +430,7 @@ function railtimetable_smalltimetable($times, $heading, $fordate, $extra = "", $
     }
 
     if (strlen($times[0]->html) > 0) {
-        $html .= "<p class='timetable-smallnotes'>".$times[0]->html."</p>";
+        $html .= "<p class='timetable-smallnotes'>".railtimetable_trans($times[0]->html)."</p>";
     }
 
     return $html;
