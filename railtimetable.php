@@ -441,7 +441,7 @@ function railtimetable_processtimes($times, $colsmeta, $date) {
     $meta = json_decode($colsmeta);
     $times = json_decode($times);
     $count = 0;
-    if (get_class($date) != 'DateTime') {
+    if (!$date instanceof DateTime) {
         $date = DateTime::createFromFormat("Y-m-d", $date);
     }
 
@@ -518,6 +518,7 @@ function railtimetable_events($attr) {
     railtimetable_setlangage();
     $now = date("Y-m-d");
     $now = new DateTime();
+    $timezone = new \DateTimeZone(get_option('timezone_string'));
     $now->setTimezone($timezone);
     $now = $now->format("Y-m-d");
     $hour = new DateTime();
