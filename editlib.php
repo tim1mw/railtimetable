@@ -695,6 +695,9 @@ function railtimetable_get_updatetimes($key, $totaltrains) {
        if (array_key_exists($key.'hour_'.$loop, $_POST)) {
            $strs[$loop]->hour = sanitize_text_field($_POST[$key.'hour_'.$loop]);
            $strs[$loop]->min = sanitize_text_field($_POST[$key.'min_'.$loop]);
+           if (strlen($strs[$loop]->hour) == 0 && strlen($strs[$loop]->min) == 0) {
+               continue;
+           }
            if (strlen($strs[$loop]->hour) > 0 || strlen($strs[$loop]->min) > 0) {
                $allempty = false;
            }
