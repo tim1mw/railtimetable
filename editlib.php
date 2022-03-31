@@ -748,7 +748,7 @@ function railtimetable_edit_timetable($id=-1, $timetable="", $background ="66666
             ?></select></td> 
         </tr><tr>
             <td>Notes</td>
-            <td><textarea name='html' cols='80' rows='3'><?php echo htmlspecialchars($notes, ENT_QUOTES); ?></textarea></td>
+            <td><textarea name='html' cols='80' rows='3'><?php echo htmlspecialchars(stripslashes($notes), ENT_QUOTES); ?></textarea></td>
         </tr><tr>
             <td>Background colour</td>
             <td><input type='color' name='background' size='6' value='#<?php echo htmlspecialchars($background); ?>' /></td>

@@ -72,7 +72,7 @@ CREATE TABLE {$wpdb->prefix}railtimetable_stntimes (
 $sql[] = "
 CREATE TABLE {$wpdb->prefix}railtimetable_timetables (
   id int(11) NOT NULL AUTO_INCREMENT,
-  timetable varchar(8) NOT NULL,
+  timetable varchar(12) NOT NULL,
   background varchar(6) NOT NULL,
   colour varchar(6) NOT NULL,
   html text NOT NULL,

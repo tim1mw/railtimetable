@@ -158,7 +158,7 @@ function railtimetable_render_times($tmeta) {
     $text .= "</table>";
 
     if (strlen($tmeta->html) > 0) {
-        $text .= railtimetable_trans($tmeta->html);
+        $text .= railtimetable_trans(stripslashes($tmeta->html));
     }
 
     $rqstations = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}railtimetable_stations WHERE hidden = 0 AND requeststop = 1");
