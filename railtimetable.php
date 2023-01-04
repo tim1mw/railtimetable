@@ -98,7 +98,7 @@ function railtimetable_times_all($attr) {
     $html = '<div class="timetabletabs" id="timetabletabs"><ul style="margin:0px;">';
     $width = 100/count($tmetas);
     for($loop=0; $loop < count($tmetas); $loop++) {
-        $html .= '<li class="railtimetable-'.$tmetas[$loop]->timetable.'"><a style="width:'.$width.'%" class="railtimetable-'.$tmetas[$loop]->timetable.'" href="#timetabletab'.$loop.'">'.railtimetable_trans($tmetas[$loop]->timetable).
+        $html .= '<li class="railtimetable-'.$tmetas[$loop]->timetable.'"><a style="width:'.$width.'%" class="railtimetable-'.railtimetable_get_tt_style($tmetas[$loop]->timetable).'" href="#timetabletab'.$loop.'">'.railtimetable_trans($tmetas[$loop]->timetable).
             '</a></li>';
     }
 
@@ -112,6 +112,14 @@ function railtimetable_times_all($attr) {
     $html .= "<script type='text/javascript'>initAllTimetable();</script></div>";
 
     return $html;
+}
+
+function railtimetable_get_tt_style($tt) {
+    //$tt = str_replace(' ', '_', $tt);
+    //$tt = str_replace('&', '-', $tt);
+    $tt = preg_replace('/[^A-Za-z0-9._-]/', '', $tt);
+    $tt = strtolower($tt);
+    return $tt;
 }
 
 function railtimetable_times($attr) {
@@ -679,7 +687,7 @@ function railtimetable_style()
     $timetables = $wpdb->get_results("SELECT id, timetable, colour, background FROM {$wpdb->prefix}railtimetable_timetables");
     $data = '';
     foreach ($timetables as $timetable) {
-        $data .= ".railtimetable-".$timetable->timetable."{\n".
+        $data .= ".railtimetable-".railtimetable_get_tt_style($timetable->timetable)."{\n".
             "color:#".$timetable->colour.";\n".
             "background:#".$timetable->background.";\n".
             "}";
