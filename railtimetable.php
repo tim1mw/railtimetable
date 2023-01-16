@@ -758,17 +758,18 @@ function railtimetable_popup() {
         }
 
         // Get the first and last stations
-        $firstid = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}railtimetable_stations WHERE hidden = 0 AND closed = 0 ORDER BY sequence ASC LIMIT 1");
-        $lastid = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}railtimetable_stations WHERE hidden = 0 AND closed = 0 ORDER BY sequence DESC LIMIT 1");
-        $first = railtimetable_timesforstation($firstid, "sequence", $date->format('Y-m-d'), "=");
-        $last = railtimetable_timesforstation($lastid, "id", $date->format('Y-m-d'), "=");
+        $pstns = $wpdb->get_results("SELECT id FROM {$wpdb->prefix}railtimetable_stations WHERE hidden = 0 AND closed = 0 AND principal = 1 ORDER BY sequence ASC");
+        $astns = array();
+        foreach ($pstns as $pstn) {
+            $astns[] = railtimetable_timesforstation($pstn->id, "id", $date->format('Y-m-d'), "=")[0];
+        }
         if (!$buylink) {
-            if (strlen($first[0]->buylink) >0) {
-                $buylink = get_buylink($first[0]->buylink, $date->getTimestamp());
+            if (strlen($astns[0]->buylink) >0) {
+                $buylink = get_buylink($astns[0]->buylink, $date->getTimestamp());
             }
         }
 
-        echo railtimetable_smalltimetable(array($first[0], $last[0]), __("Timetable for", "railtimetable")."<br />".
+        echo railtimetable_smalltimetable($astns, __("Timetable for", "railtimetable")."<br />".
             strftime(get_option('railtimetable_date_format'), $date->getTimestamp()), $date, $extra, $buylink);
 
         exit();
