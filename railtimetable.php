@@ -394,7 +394,7 @@ function railtimetable_today($attr) {
             $adate = $tomorrow;
         } else {
             $heading = __("Next Trains", "railtimetable")." ".$nextds;
-            $adate = $nextds;
+            $adate = $nextd->format('Y-m-d');
         }
     }
 
