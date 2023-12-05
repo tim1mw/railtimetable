@@ -502,8 +502,8 @@ function railtimetable_edit_times($id) {
 
     echo "<h2>Update Timetable Times: <span style='text-transform:capitalize'>".$tt->timetable."</span></h2>".
         "<p>Please use 24 hour clock here and set the Display Time format to control how it is displayed</p>".
-        "<p>Rules determin special cases when trains don't run (or only run) on certain days of the week or dates. To specify that the train doesn't run on a day, ".
-        "start the line with !, for trains that only run on a specified date or date, use *. Follow that with either the day of the week as a number (monday=1, sunday=7) ".
+        "<p>Rules determine special cases when trains don't run (or only run) on certain days of the week or dates. To specify that the train doesn't run on a day, ".
+        "start the line with !, for trains that only run on a specified day or date, use *. Follow that with either the day of the week as a number (monday=1, sunday=7) ".
         " or the date written as YYYYMMDD. eg Train doesn't run on Friday '!5', train only runs on 27th June 2021 '*20200627'. Put one rule per line.</p>".
         "<form method='post' action=''>\n".
         "<input type='hidden' name='action' value='railtimetable-edittimes' />".

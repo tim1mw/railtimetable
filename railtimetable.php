@@ -452,7 +452,6 @@ function railtimetable_processtimes($times, $colsmeta, $date) {
     if (!$date instanceof DateTime) {
         $date = DateTime::createFromFormat("Y-m-d", $date);
     }
-
     foreach ($times as $time) {
         $rules = $meta[$count]->rules;
         $count++;
@@ -462,9 +461,8 @@ function railtimetable_processtimes($times, $colsmeta, $date) {
                 case '*':
                     if (railtimetable_isruleforday($rule->str, $date)) {
                         $filtered[] = $time;  
-                        continue 3;
                     }
-                    break;
+                    continue 3;
                 case '!':
                     if (railtimetable_isruleforday($rule->str, $date)) {  
                         continue 3;
