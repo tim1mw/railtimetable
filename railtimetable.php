@@ -455,14 +455,17 @@ function railtimetable_processtimes($times, $colsmeta, $date) {
     foreach ($times as $time) {
         $rules = $meta[$count]->rules;
         $count++;
+        $add = true;
         foreach ($rules as $rule) {
 
             switch ($rule->code) {
                 case '*':
                     if (railtimetable_isruleforday($rule->str, $date)) {
-                        $filtered[] = $time;  
+                        $filtered[] = $time; 
+                        continue 3;
                     }
-                    continue 3;
+                    $add = false;
+                    continue 2;
                 case '!':
                     if (railtimetable_isruleforday($rule->str, $date)) {  
                         continue 3;
@@ -470,7 +473,9 @@ function railtimetable_processtimes($times, $colsmeta, $date) {
                     break;
             }
         }
-        $filtered[] = $time;
+        if ($add) {
+            $filtered[] = $time;
+        }
     }
     return $filtered;
 }
