@@ -125,6 +125,16 @@ function railtimetable_edit() {
     </form>
     <?php
     }
+    ?><h2>Short codes</h2>
+    <p>Show list of departures for specified stations for today or the next running day: <br />
+    [railtimetable_today stations="Station 1,Station 2"]</p>
+    <p>Show a list of upcoming events:<br />
+    [railtimetable_events number="3"]</p>
+    <p>Show a timetable grid for start to end month:
+    [railtimetable_show start='2024-10' end='2024-12']</p>
+    <p>Show the timetables(s) in full<br/>
+    [railtimetable_times_all]</p>
+    <?php
 }
 
 add_action('admin_post_railtimetable-exportdata', 'railtimetable_exportdata');
