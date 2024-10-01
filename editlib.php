@@ -394,6 +394,7 @@ function railtimetable_updatestations() {
         $hidden = railtimetable_get_cbval('station_hidden_new');
         $rs = railtimetable_get_cbval('station_requeststop_new');
         $closed = railtimetable_get_cbval('station_closed_new');
+        $principal = railtimetable_get_cbval('station_principal_new');
 
         $wpdb->insert($wpdb->prefix.'railtimetable_stations',
             array('name' => stripslashes($stnnew), 
