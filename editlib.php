@@ -134,6 +134,10 @@ function railtimetable_edit() {
     [railtimetable_show start='2024-10' end='2024-12']</p>
     <p>Show the timetables(s) in full<br/>
     [railtimetable_times_all]</p>
+    <p>Show full events list for specifed dates:<br />
+    [railtimetable_events_full start="2024-01-01" end="2024-12-31"]</p>
+    <p>Show a specific timetable:</p>
+    [railtimetable_times timetable="pink"]</p>
     <?php
 }
 
