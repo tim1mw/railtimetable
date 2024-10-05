@@ -2,11 +2,11 @@
 
 /**
  * Plugin Name: Heritage Railway Timetable
- * Plugin URI:  http://www.autotrain.org
+ * Plugin URI:  https://github.com/tim1mw/railtimetable
  * Description: The title says it all!
  * Author:      Tim Williams, AutoTrain (tmw@autotrain.org)
- * Author URI:  http://www.autotrain.org
- * Version:     0.0.2
+ * Author URI:  https://github.com/tim1mw/
+ * Version:     0.0.3
  * Text Domain: railtimetable
  * License:     GPL3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
