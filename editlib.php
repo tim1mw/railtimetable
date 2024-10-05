@@ -314,8 +314,8 @@ function railtimetable_edit_stations() {
 
         echo "<tr>".
             "<td>".($stations[$loop]->sequence+1).
-            ": <input type='text' name='station_name_".$stations[$loop]->id."' size='25' value='".htmlspecialchars($stations[$loop]->name, ENT_QUOTES)."' /></td>".
-            "<td><input type='text' name='station_description_".$stations[$loop]->id."' size='50' value='".htmlspecialchars($stations[$loop]->description, ENT_QUOTES)."' /></td>".
+            ": <input type='text' name='station_name_".$stations[$loop]->id."' size='25' maxlength='50'  value='".htmlspecialchars($stations[$loop]->name, ENT_QUOTES)."' /></td>".
+            "<td><input type='text' maxlength='255' name='station_description_".$stations[$loop]->id."' size='50' value='".htmlspecialchars($stations[$loop]->description, ENT_QUOTES)."' /></td>".
             "<td><input type='checkbox' name='station_principal_".$stations[$loop]->id."' value='1' ".$principal." /></td>".
             "<td><input type='checkbox' name='station_requeststop_".$stations[$loop]->id."' value='1' ".$rs." /></td>".
             "<td><input type='checkbox' name='station_closed_".$stations[$loop]->id."' value='1' ".$closed." /></td>".
@@ -339,8 +339,8 @@ function railtimetable_edit_stations() {
     ?>
     <tr><th colspan="">New Station</th></tr>
     <tr>
-        <td><input type='text' size='25' name='station_name_new' value='' /></td>
-        <td><input type='text' size='50' name='station_description_new' value='' /></td>
+        <td><input type='text' size='25' maxlength='50' name='station_name_new' value='' /></td>
+        <td><input type='text' size='50' maxlength='255' name='station_description_new' value='' /></td>
         <td><input type='checkbox' name='station_principal_new' value='1' /></td>
         <td><input type='checkbox' name='station_requeststop_new' value='1' /></td>
         <td><input type='checkbox' name='station_closed_new' value='1' /></td>
@@ -748,7 +748,7 @@ function railtimetable_edit_timetable($id=-1, $timetable="", $background ="66666
         <input type='hidden' name='id' value='<?php echo htmlspecialchars($id); ?>' /> 
         <table><tr>
             <td>Timetable</td>
-            <td><input type='text' name='timetable' size='12' value='<?php echo htmlspecialchars($timetable, ENT_QUOTES); ?>' /></td>
+            <td><input type='text' name='timetable' size='12'  maxlength='12' value='<?php echo htmlspecialchars($timetable, ENT_QUOTES); ?>' /></td>
         </tr><tr>
             <td>Total Trips</td>
             <td><select name='totaltrains'><?php
@@ -775,7 +775,7 @@ function railtimetable_edit_timetable($id=-1, $timetable="", $background ="66666
             <td><input type='checkbox' name='hidden' value='1' <?php if ($hidden == 1) {echo "checked";} ?>/> (note, only hides in "all timetables" display, will still be shown on calendar where set)</td>
         </tr><tr>
             <td>Buy link</td>
-            <td><input type='text' name='buylink' size='80' value='<?php echo htmlspecialchars($buylink); ?>' /></td>
+            <td><input type='text' name='buylink'  maxlength='255' size='80' value='<?php echo htmlspecialchars($buylink); ?>' /></td>
         </tr><tr>
             <td></td><td>Use <a href='https://www.php.net/manual/en/datetime.format.php' target='_blank'>PHP strftime formatting parameters</a> here to insert a date</td>
         </tr><tr>
@@ -906,7 +906,7 @@ function railtimetable_edit_event($id=-1, $title="", $desc="", $link="", $bg = "
         <input type='hidden' name='id' value='<?php echo htmlspecialchars($id); ?>' /> 
         <table><tr>
             <td>Title</td>
-            <td><input type='text' name='title' size='50' value='<?php echo htmlspecialchars($title, ENT_QUOTES); ?>' /></td>
+            <td><input type='text' name='title' size='50' maxlength='100' value='<?php echo htmlspecialchars($title, ENT_QUOTES); ?>' /></td>
         </tr><tr>
             <td style='vertical-align:top'>Description</td>
             <td><textarea name='desc' cols='80' rows='5'><?php echo htmlspecialchars($desc, ENT_QUOTES); ?></textarea></td>
