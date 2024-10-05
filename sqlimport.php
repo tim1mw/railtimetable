@@ -48,7 +48,6 @@ CREATE TABLE {$wpdb->prefix}railtimetable_stations (
   closed int(1) NOT NULL,
   hidden int(1) NOT NULL,
   principal int(1) NOT NULL,
-
   PRIMARY KEY (id),
   KEY sequence (sequence)
 )
